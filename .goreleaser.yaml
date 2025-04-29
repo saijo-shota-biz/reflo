@@ -20,10 +20,9 @@ brews:
     homepage: "https://github.com/saijo-shota-biz/reflo"
     install: |
       bin.install "reflo"
-    repository:                # ← OSS 版でも “github:” キーは必須
+    repository:
       owner: saijo-shota-biz
-      name: homebrew-reflo # Tap リポジトリ名
-    #   push: false        # OSS 版では自動で push はスキップされるので不要
+      name: homebrew-reflo
 
 release:
   github:
