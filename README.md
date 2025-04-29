@@ -31,7 +31,7 @@
 Coming soon via Homebrew!
 
 ```bash
-brew tap yourname/homebrew-reflo
+brew tap saijo-shota-biz/homebrew-reflo
 brew install reflo
 ```
 

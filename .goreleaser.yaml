@@ -1,0 +1,30 @@
+project_name: reflo
+
+builds:
+  - id: reflo
+    main: ./main.go
+    binary: reflo
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+brews:
+  - name: reflo
+    description: "Reflo – Reflect, Flow, and Log your daily actions."
+    homepage: "https://github.com/saijo-shota-biz/reflo"
+    install: |
+      bin.install "reflo"
+
+release:
+  github:
+    owner: saijo-shota-biz
+    name: reflo

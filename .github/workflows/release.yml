@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'          # v0.1.0 など SemVer タグでのみ起動
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write         # リリースと dist/* アップロード用
+      packages: write
+      pull-requests: write
+
+    steps:
+      # 1) ソース取得
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2) Go 環境
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.6'   # 1.22 以降なら OK（安定版推奨）
+
+      # 3) GoReleaser で “バイナリ + Formula ファイル” を生成 & GitHub Release 作成
+      - name: Run GoReleaser (OSS)
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4) 生成された Formula を Tap リポジトリに自動コミット
+      #    ・dist/reflo.rb というパスで出力される想定
+      #    ・PAT は homebrew-reflo に “contents:write” 権限を持たせる
+      - name: Push Formula to homebrew-reflo
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          FORMULA_PATH=$(ls dist/*.rb | head -n 1)   # 生成された .rb を自動検出
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone \
+            https://x-access-token:${{ secrets.HOMEBREW_REPO_TOKEN }}@github.com/saijo-shota-biz/homebrew-reflo.git \
+            tap
+
+          cp "$FORMULA_PATH" tap/Formula/reflo.rb
+
+          cd tap
+          git add Formula/reflo.rb
+          git commit -m "Update reflo formula for ${{ github.ref_name }}"
+          git push origin main
