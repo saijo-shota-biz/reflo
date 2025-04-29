@@ -1,4 +1,4 @@
-version: 2                # ← 必須
+version: 2                 # 必須
 
 project_name: reflo
 
@@ -8,8 +8,7 @@ builds:
     binary: reflo
     goos: [darwin, linux]
     goarch: [amd64, arm64]
-    env:
-      - CGO_ENABLED=0
+    env: [CGO_ENABLED=0]
 
 archives:
   - format: tar.gz
@@ -21,6 +20,10 @@ brews:
     homepage: "https://github.com/saijo-shota-biz/reflo"
     install: |
       bin.install "reflo"
+    repository:                # ← OSS 版でも “github:” キーは必須
+      owner: saijo-shota-biz
+      name: homebrew-reflo # Tap リポジトリ名
+    #   push: false        # OSS 版では自動で push はスキップされるので不要
 
 release:
   github:
