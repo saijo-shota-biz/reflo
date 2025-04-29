@@ -37,19 +37,31 @@ jobs:
       # 4) 生成された Formula を Tap リポジトリに自動コミット
       #    ・dist/reflo.rb というパスで出力される想定
       #    ・PAT は homebrew-reflo に “contents:write” 権限を持たせる
-      - name: Push Formula to homebrew-reflo
+      - name: Show dist tree (debug)
+        run: ls -R dist || true
+
+      - name: Push Homebrew Formula to Tap Repository
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          FORMULA_PATH=$(ls dist/*.rb | head -n 1)   # 生成された .rb を自動検出
+          set -e
+          # ❶ dist 以下を再帰検索して最初に見つかった .rb を使う
+          FORMULA_PATH=$(find dist -type f -name '*.rb' | head -n 1)
+          
+          if [ -z "$FORMULA_PATH" ]; then
+            echo "::error ::Homebrew formula (.rb) not found in dist/"
+            exit 1
+          fi
+          
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+          
           git clone \
             https://x-access-token:${{ secrets.HOMEBREW_REPO_TOKEN }}@github.com/saijo-shota-biz/homebrew-reflo.git \
             tap
-
+          
+          mkdir -p tap/Formula
           cp "$FORMULA_PATH" tap/Formula/reflo.rb
-
+          
           cd tap
           git add Formula/reflo.rb
           git commit -m "Update reflo formula for ${{ github.ref_name }}"
