@@ -37,32 +37,32 @@ jobs:
 #      # 4) 生成された Formula を Tap リポジトリに自動コミット
 #      #    ・dist/reflo.rb というパスで出力される想定
 #      #    ・PAT は homebrew-reflo に “contents:write” 権限を持たせる
-#      - name: Show dist tree (debug)
-#        run: ls -R dist || true
-#
-#      - name: Push Homebrew Formula to Tap Repository
-#        if: startsWith(github.ref, 'refs/tags/')
-#        run: |
-#          set -e
-#          # ❶ dist 以下を再帰検索して最初に見つかった .rb を使う
-#          FORMULA_PATH="dist/homebrew/reflo.rb"
-#
-#          if [ ! -f "$FORMULA_PATH" ]; then
-#            echo "::error ::Formula not found!"
-#            exit 1
-#          fi
-#
-#          git config --global user.name  "github-actions[bot]"
-#          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-#
-#          git clone \
-#            https://x-access-token:${{ secrets.HOMEBREW_REPO_TOKEN }}@github.com/saijo-shota-biz/homebrew-reflo.git \
-#            tap
-#
-#          mkdir -p tap/Formula
-#          cp "$FORMULA_PATH" tap/Formula/reflo.rb
-#
-#          cd tap
-#          git add Formula/reflo.rb
-#          git commit -m "Update reflo formula for ${{ github.ref_name }}"
-#          git push origin main
+      - name: Show dist tree (debug)
+        run: ls -R dist || true
+
+      - name: Push Homebrew Formula to Tap Repository
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -e
+          # ❶ dist 以下を再帰検索して最初に見つかった .rb を使う
+          FORMULA_PATH="dist/homebrew/reflo.rb"
+
+          if [ ! -f "$FORMULA_PATH" ]; then
+            echo "::error ::Formula not found!"
+            exit 1
+          fi
+
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone \
+            https://x-access-token:${{ secrets.HOMEBREW_REPO_TOKEN }}@github.com/saijo-shota-biz/homebrew-reflo.git \
+            tap
+
+          mkdir -p tap/Formula
+          cp "$FORMULA_PATH" tap/Formula/reflo.rb
+
+          cd tap
+          git add Formula/reflo.rb
+          git commit -m "Update reflo formula for ${{ github.ref_name }}"
+          git push origin main
