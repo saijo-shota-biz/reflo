@@ -27,7 +27,7 @@ jobs:
 
       # 3) GoReleaser で “バイナリ + Formula ファイル” を生成 & GitHub Release 作成
       - name: Run GoReleaser (OSS)
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --clean
@@ -45,10 +45,10 @@ jobs:
         run: |
           set -e
           # ❶ dist 以下を再帰検索して最初に見つかった .rb を使う
-          FORMULA_PATH=$(find dist -type f -name '*.rb' | head -n 1)
+          FORMULA_PATH="dist/homebrew/reflo.rb"
           
-          if [ -z "$FORMULA_PATH" ]; then
-            echo "::error ::Homebrew formula (.rb) not found in dist/"
+          if [ ! -f "$FORMULA_PATH" ]; then
+            echo "::error ::Formula not found!"
             exit 1
           fi
           
