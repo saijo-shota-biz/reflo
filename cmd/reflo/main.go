@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -19,6 +21,7 @@ const (
 func main() {
 	if len(os.Args) < 2 {
 		showHelp()
+		return
 	}
 
 	switch os.Args[1] {
@@ -49,9 +52,11 @@ func cmdStart() {
 	defer cancel()
 
 	// タスク宣言
-	fmt.Print("What will you do? > ")
-	var goal string
-	fmt.Scan(&goal)
+	goal, err := readLine("What will you do? > ")
+	if err != nil {
+		fmt.Println("input error:", err)
+		return
+	}
 
 	// タイマー開始
 	start := time.Now().UTC()
@@ -63,14 +68,16 @@ func cmdStart() {
 	end := time.Now().UTC()
 
 	// 振り返り
-	fmt.Print("What have you done? > ")
-	var retro string
-	fmt.Scan(&retro)
+	retro, err := readLine("What have you done? > ")
+	if err != nil {
+		fmt.Println("input error:", err)
+		return
+	}
 
 	// ログ出力
 	fmt.Printf("%v ~ %v\n", start.Format("2006-01-02 15:04"), end.Format("15:04"))
 	log := logger.NewDefaultJsonLogger()
-	err := log.Write(logger.Session{
+	err = log.Write(logger.Session{
 		StartTime: start,
 		EndTime:   end,
 		Goal:      goal,
@@ -88,10 +95,12 @@ func cmdStart() {
 	}
 
 	// もう一周？
-	fmt.Print("One more session? (yes or no) > ")
-	var oneMore string
-	fmt.Scan(&oneMore)
-	if oneMore == "yes" || oneMore == "y" {
+	oneMore, err := readLine("One more session? (yes or no) > ")
+	if err != nil {
+		fmt.Println("input error:", err)
+		return
+	}
+	if strings.HasPrefix(strings.ToLower(oneMore), "y") {
 		fmt.Println("========================")
 		cmdStart()
 	}
@@ -125,4 +134,20 @@ func printTimerError(err error) {
 	default:
 		fmt.Println("Error:", err)
 	}
+}
+
+func readLine(prompt string) (string, error) {
+	fmt.Print(prompt)
+
+	// fmt.Scanを使わないのはfmt.Scanではスペースが入れられないため。
+	// "Set a goal" -> "Set"しか取得できない
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		return "", scanner.Err()
+	}
+	// 1. タイプミスで前後にスペースを入れた → Goal / Goal のままログ保存すると、テストや JSON で比較しづらい
+	// 2. Scanner は \n 区切りで読み込むが、Windows 環境の \r\n だと \r が残ることがある（"\r"）
+	//     → yes\r と比較すると strings.ToLower(oneMore) が "yes\r" になり、HasPrefix("y") が通らない
+	// 上記の理由によりstrings.TrimSpaceを行う
+	return strings.TrimSpace(scanner.Text()), nil
 }
