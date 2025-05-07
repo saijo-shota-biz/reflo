@@ -54,13 +54,13 @@ func cmdStart() {
 	fmt.Scan(&goal)
 
 	// タイマー開始
-	start := time.Now()
+	start := time.Now().UTC()
 	fmt.Printf("Focusing %v …\n", defaultFocus)
 	if err := timer.New(defaultFocus).Wait(ctx); err != nil {
 		printTimerError(err)
 	}
 	fmt.Print("\a")
-	end := time.Now()
+	end := time.Now().UTC()
 
 	// 振り返り
 	fmt.Print("What have you done? > ")

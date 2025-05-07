@@ -28,7 +28,7 @@ func (l *JsonLogger) Write(session Session) error {
 		return err
 	}
 
-	path := filepath.Join(l.root, time.Now().Format("2006-01-02")+".json")
+	path := filepath.Join(l.root, time.Now().UTC().Format("2006-01-02")+".json")
 
 	var list []Session
 	if b, err := os.ReadFile(path); err == nil {
@@ -44,7 +44,7 @@ func (l *JsonLogger) Write(session Session) error {
 func (l *JsonLogger) ReadDay() ([]Session, error) {
 	var list []Session
 
-	path := filepath.Join(l.root, time.Now().Format("2006-01-02")+".json")
+	path := filepath.Join(l.root, time.Now().UTC().Format("2006-01-02")+".json")
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return list, err
