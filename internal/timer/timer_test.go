@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"context"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -15,9 +16,10 @@ func TestTimer_WaitExpiresNearDuration(t *testing.T) {
 	start := time.Now()
 
 	// Act
-	tm.Wait()
+	err := tm.Wait(context.Background())
 
 	// Assert
+	require.NoError(t, err)
 	elapsed := time.Since(start)
 	require.True(t, d-delta <= elapsed && elapsed <= d+delta)
 }
@@ -29,9 +31,10 @@ func TestTimer_ZeroDurationReturnsImmediately(t *testing.T) {
 	start := time.Now()
 
 	// Act
-	tm.Wait()
+	err := tm.Wait(context.Background())
 
 	// Assert
+	require.NoError(t, err)
 	elapsed := time.Since(start)
 	require.True(t, elapsed <= delta)
 }
@@ -44,7 +47,8 @@ func TestTimer_WaitIsIdempotent(t *testing.T) {
 	// Act
 	done := make(chan struct{})
 	go func() {
-		tm.Wait()
+		err := tm.Wait(context.Background())
+		require.NoError(t, err)
 		close(done)
 	}()
 
@@ -57,9 +61,30 @@ func TestTimer_WaitIsIdempotent(t *testing.T) {
 	}
 
 	start := time.Now()
-	tm.Wait()
+	err := tm.Wait(context.Background())
+
+	// Assert
+	require.NoError(t, err)
+	elapsed := time.Since(start)
+	require.True(t, elapsed <= delta)
+}
+
+func TestTimer_WaitCancel(t *testing.T) {
+	// Arrange
+	d := 200 * time.Millisecond
+	start := time.Now()
+
+	// Act
+	tm := New(d)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+	err := tm.Wait(ctx)
 
 	// Assert
 	elapsed := time.Since(start)
-	require.True(t, elapsed <= delta)
+	require.Less(t, elapsed, 100*time.Millisecond+20*time.Millisecond)
+	require.ErrorIs(t, err, context.Canceled)
 }

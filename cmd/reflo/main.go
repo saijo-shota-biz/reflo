@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
+	"os/signal"
 	"time"
 )
 
@@ -42,6 +45,9 @@ Usage:
 }
 
 func cmdStart() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	// タスク宣言
 	fmt.Print("What will you do? > ")
 	var goal string
@@ -50,7 +56,9 @@ func cmdStart() {
 	// タイマー開始
 	start := time.Now()
 	fmt.Printf("Focusing %v …\n", defaultFocus)
-	timer.New(defaultFocus).Wait()
+	if err := timer.New(defaultFocus).Wait(ctx); err != nil {
+		printTimerError(err)
+	}
 	fmt.Print("\a")
 	end := time.Now()
 
@@ -75,7 +83,9 @@ func cmdStart() {
 
 	// 休憩
 	fmt.Printf("Break %v …\n", defaultBreak)
-	timer.New(defaultBreak).Wait()
+	if err := timer.New(defaultBreak).Wait(ctx); err != nil {
+		printTimerError(err)
+	}
 
 	// もう一周？
 	fmt.Print("One more session? (yes or no) > ")
@@ -103,5 +113,16 @@ func cmdEndDay() {
 			session.EndTime.Format("15:04"),
 			session.Goal,
 			session.Retro)
+	}
+}
+
+func printTimerError(err error) {
+	switch {
+	case errors.Is(err, context.Canceled):
+		fmt.Println("Canceled by user")
+	case errors.Is(err, context.DeadlineExceeded):
+		fmt.Println("Timed out")
+	default:
+		fmt.Println("Error:", err)
 	}
 }

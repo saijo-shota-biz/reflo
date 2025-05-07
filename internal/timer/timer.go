@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -23,6 +24,11 @@ func New(duration time.Duration) *Timer {
 	return t
 }
 
-func (t *Timer) Wait() {
-	<-t.ch
+func (t *Timer) Wait(ctx context.Context) error {
+	select {
+	case <-t.ch:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
