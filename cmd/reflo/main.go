@@ -51,58 +51,60 @@ func cmdStart() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	// タスク宣言
-	goal, err := readLine("What will you do? > ")
-	if err != nil {
-		fmt.Println("input error:", err)
-		return
-	}
+	for {
+		// タスク宣言
+		goal, err := readLine("What will you do? > ")
+		if err != nil {
+			fmt.Println("input error:", err)
+			return
+		}
 
-	// タイマー開始
-	start := time.Now().UTC()
-	fmt.Printf("Focusing %v …\n", defaultFocus)
-	if err := timer.New(defaultFocus).Wait(ctx); err != nil {
-		printTimerError(err)
-	}
-	fmt.Print("\a")
-	end := time.Now().UTC()
+		// タイマー開始
+		start := time.Now().UTC()
+		fmt.Printf("Focusing %v …\n", defaultFocus)
+		if err := timer.New(defaultFocus).Wait(ctx); err != nil {
+			printTimerError(err)
+		}
+		fmt.Print("\a")
+		end := time.Now().UTC()
 
-	// 振り返り
-	retro, err := readLine("What have you done? > ")
-	if err != nil {
-		fmt.Println("input error:", err)
-		return
-	}
+		// 振り返り
+		retro, err := readLine("What have you done? > ")
+		if err != nil {
+			fmt.Println("input error:", err)
+			return
+		}
 
-	// ログ出力
-	fmt.Printf("%v ~ %v\n", start.Format("2006-01-02 15:04"), end.Format("15:04"))
-	log := logger.NewDefaultJsonLogger()
-	err = log.Write(logger.Session{
-		StartTime: start,
-		EndTime:   end,
-		Goal:      goal,
-		Retro:     retro,
-	})
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+		// ログ出力
+		fmt.Printf("%v ~ %v\n", start.Format("2006-01-02 15:04"), end.Format("15:04"))
+		log := logger.NewDefaultJsonLogger()
+		err = log.Write(logger.Session{
+			StartTime: start,
+			EndTime:   end,
+			Goal:      goal,
+			Retro:     retro,
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
 
-	// 休憩
-	fmt.Printf("Break %v …\n", defaultBreak)
-	if err := timer.New(defaultBreak).Wait(ctx); err != nil {
-		printTimerError(err)
-	}
+		// 休憩
+		fmt.Printf("Break %v …\n", defaultBreak)
+		if err := timer.New(defaultBreak).Wait(ctx); err != nil {
+			printTimerError(err)
+		}
 
-	// もう一周？
-	oneMore, err := readLine("One more session? (yes or no) > ")
-	if err != nil {
-		fmt.Println("input error:", err)
-		return
-	}
-	if strings.HasPrefix(strings.ToLower(oneMore), "y") {
+		// もう一周？
+		ans, err := readLine("One more session? (yes or no) > ")
+		if err != nil {
+			fmt.Println("input error:", err)
+			return
+		}
+		if !strings.HasPrefix(strings.ToLower(ans), "y") {
+			break
+		}
 		fmt.Println("========================")
-		cmdStart()
 	}
 }
 
