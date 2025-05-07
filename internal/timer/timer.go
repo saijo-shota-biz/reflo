@@ -2,24 +2,22 @@ package timer
 
 import (
 	"context"
-	"sync"
 	"time"
 )
 
 type Timer struct {
-	once sync.Once
-	ch   chan struct{}
+	ch chan struct{}
 }
 
-func New(duration time.Duration) *Timer {
+func New(d time.Duration) *Timer {
 	t := &Timer{ch: make(chan struct{})}
 
-	go func() {
-		time.Sleep(duration)
-		t.once.Do(func() {
-			close(t.ch)
-		})
-	}()
+	if d <= 0 {
+		close(t.ch)
+		return t
+	}
+
+	time.AfterFunc(d, func() { close(t.ch) })
 
 	return t
 }
