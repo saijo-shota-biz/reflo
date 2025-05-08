@@ -48,7 +48,7 @@ reflo/
 ### 3.4 データ構造
 
 ```go
-// internal/logger/session.go
+// internal/logger/logger.go
 
 // Session represents a single focus cycle and reflection.
 type Session struct {

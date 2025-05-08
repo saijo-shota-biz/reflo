@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -37,14 +38,18 @@ func main() {
 }
 
 func showHelp() {
-	fmt.Println(`
-reflo - Reflect, Flow, Log
-
-Usage:
-  reflo start    # start a focus session
-  reflo end-day  # output daily summary
-  reflo help     # show this message`,
-	)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "reflo - Pomodoro-style focus logger")
+	fmt.Fprintln(w, "USAGE:")
+	fmt.Fprintln(w, "  reflo <command>")
+	fmt.Fprintln(w, "COMMANDS:")
+	fmt.Fprintln(w, "  start\tStart a focus session")
+	fmt.Fprintln(w, "  end-day\tOutput daily summary")
+	fmt.Fprintln(w, "  help\tShow this help message")
+	fmt.Fprintln(w, "EXAMPLES:")
+	fmt.Fprintln(w, "  reflo start")
+	fmt.Fprintln(w, "  reflo end-day")
+	w.Flush()
 }
 
 func cmdStart() {
@@ -52,14 +57,14 @@ func cmdStart() {
 	defer cancel()
 
 	for {
-		// タスク宣言
-		goal, err := readLine("What will you do? > ")
+		// --- 計画 ---
+		goal, err := readLine("What will you work on during this session? > ")
 		if err != nil {
 			fmt.Println("input error:", err)
 			return
 		}
 
-		// タイマー開始
+		// --- フォーカス ---
 		start := time.Now().UTC()
 		fmt.Printf("Focusing %v …\n", defaultFocus)
 		if err := timer.New(defaultFocus).Wait(ctx); err != nil {
@@ -68,14 +73,14 @@ func cmdStart() {
 		fmt.Print("\a")
 		end := time.Now().UTC()
 
-		// 振り返り
-		retro, err := readLine("What have you done? > ")
+		// --- 振り返り ---
+		retro, err := readLine("What did you accomplish? > ")
 		if err != nil {
 			fmt.Println("input error:", err)
 			return
 		}
 
-		// ログ出力
+		// --- ログ ---
 		fmt.Printf("%v ~ %v\n", start.Format("2006-01-02 15:04"), end.Format("15:04"))
 		log := logger.NewDefaultJsonLogger()
 		err = log.Write(logger.Session{
@@ -89,15 +94,15 @@ func cmdStart() {
 			return
 		}
 
-		// 休憩
+		// --- 休憩 ---
 		fmt.Printf("Break %v …\n", defaultBreak)
 		if err := timer.New(defaultBreak).Wait(ctx); err != nil {
 			printTimerError(err)
 		}
 		fmt.Print("\a")
 
-		// もう一周？
-		ans, err := readLine("One more session? (yes or no) > ")
+		// --- 継続確認 ---
+		ans, err := readLine("Start another session? [y/n] > ")
 		if err != nil {
 			fmt.Println("input error:", err)
 			return

@@ -4,7 +4,7 @@ project_name: reflo
 
 builds:
   - id: reflo
-    main: ./main.go
+    main: ./cmd/reflo
     binary: reflo
     goos: [darwin, linux]
     goarch: [amd64, arm64]
