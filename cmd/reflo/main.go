@@ -120,8 +120,8 @@ func cmdEndDay() {
 	for i, session := range sessions {
 		fmt.Printf("%d) %s ~ %s —  %s\n   %s\n",
 			i+1,
-			session.StartTime.Format("15:04"),
-			session.EndTime.Format("15:04"),
+			session.StartTime.In(time.Local).Format("15:04"),
+			session.EndTime.In(time.Local).Format("15:04"),
 			session.Goal,
 			session.Retro)
 	}
