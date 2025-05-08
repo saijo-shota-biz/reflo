@@ -12,44 +12,53 @@
 
 ```plaintext
 reflo/
-├── main.go           # エントリーポイント (CLI管理)
-├── pomodoro.go       # ポモドーロタイマー処理
-├── logger.go         # ログ保存/読込処理
-├── clipboard.go      # クリップボード操作
-├── notification.go   # macOS通知処理
-├── utils.go          # 澄用関数（ビープ音など）
-├── logs/             # ログ格納用ディレクトリ
-└── go.mod            # Go module file
+├── cmd/reflo/          # CLI エントリポイント
+│   └── main.go         # コマンド分岐と対話フロー
+├── internal/
+│   ├── timer/          # タイマー機能（ポモドーロ相当）
+│   │   └── timer.go
+│   └── logger/         # セッションログの永続化
+│       └── json_logger.go
+├── CHANGELOG.md
+└── README.md
 ```
 
 ---
 
 ## 3. 主要コンポーネント
 
-### 3.1 `main.go`
-- CLIの入力パース
-- `start`、`end-day`コマンド分岐処理
+### 3.1 `cmd/reflo/main.go`
 
-### 3.2 `pomodoro.go`
-- タイマーセッション管理
-    - 作業定義入力
-    - タイマーカウント処理
-    - 振り返り入力
+* CLI コマンド取り扱い (`start`, `end‑day`, `help`)
+* ユーザー入力の読み取り（`bufio.Scanner`）
+* `signal.NotifyContext` で Ctrl‑C を graceful exit
 
-### 3.3 `logger.go`
-- 日単のログ作成
-- JSONログの書き込み、読み込み
+### 3.2 `internal/timer`
 
-### 3.4 `clipboard.go`
-- 振り返りまとめのクリップボードコピー
+* `New(duration)` でワンショットタイマー生成
+* `Wait(ctx)` で満了またはキャンセル待機
+* 25min フォーカス → 5min 休憩をデフォルト値で提供
 
-### 3.5 `notification.go`
-- macOSでポップアップ通知を送信
+### 3.3 `internal/logger`
 
-### 3.6 `utils.go`
-- 時間管理
-- ビープ音鳴らし
-- フォーマット関数
+* `Write(session)` : JSON へ追記保存
+   `~/.reflo/YYYY-MM-DD.json`（ファイル名は **ローカル日付**、エントリは **ISO‑8601 / UTC**）
+* `ReadDay()`: 当日ファイルを読み出し、`[]Session` へアンマーシャル
+
+### 3.4 データ構造
+
+```go
+// internal/logger/session.go
+
+// Session represents a single focus cycle and reflection.
+type Session struct {
+    StartTime time.Time // ISO‑8601 / UTC
+    EndTime   time.Time // ISO‑8601 / UTC
+    Goal      string    // 作業宣言
+    Retro     string    // 振り返りコメント
+}
+```
+
 
 ---
 
@@ -58,21 +67,20 @@ reflo/
 ### 4.1 行動ログJSON構成
 
 ```json
-{
-  "date": "2024-04-30",
-  "sessions": [
-    {
-      "start_time": "09:00",
-      "task": "API設計ドキュメント作成",
-      "reflection": "8割経過。Slack見過ぎた"
-    },
-    {
-      "start_time": "10:00",
-      "task": "コードレビュー完了",
-      "reflection": "問題なし"
-    }
-  ]
-}
+[
+  {
+    "StartTime": "2025-05-08T09:00:00Z",
+    "EndTime":   "2025-05-08T09:25:00Z",
+    "Goal":      "API 設計ドキュメント作成",
+    "Retro":     "Slack を見過ぎて進捗 80%"
+  },
+  {
+    "StartTime": "2025-05-08T09:30:00Z",
+    "EndTime":   "2025-05-08T09:55:00Z",
+    "Goal":      "コードレビュー",
+    "Retro":     "想定よりコメント少なめ"
+  }
+]
 ```
 
 ---

@@ -94,6 +94,7 @@ func cmdStart() {
 		if err := timer.New(defaultBreak).Wait(ctx); err != nil {
 			printTimerError(err)
 		}
+		fmt.Print("\a")
 
 		// もう一周？
 		ans, err := readLine("One more session? (yes or no) > ")

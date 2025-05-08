@@ -19,16 +19,18 @@
 
 - Minimalist CLI design for instant startup
 - Session declaration and reflection input
-- 25-minute focus timer with macOS notifications
+- 25-minute focus timer with an audible bell on completion
 - 5-minute break management
-- Daily log saving (JSON format)
-- One-click daily report generation & clipboard copying
+- **Automatic JSON session logging** to `~/.reflo/YYYY-MM-DD.json`
+  (filename uses local date; timestamps are ISO-8601 / UTC)
+- Daily summary report (`reflo end-day`)
+- Graceful interruption with Ctrl-C
 
 ---
 
 ## 🛠 Installation
 
-Coming soon via Homebrew!
+### Homebrew (recommended)
 
 ```bash
 brew tap saijo-shota-biz/homebrew-reflo
