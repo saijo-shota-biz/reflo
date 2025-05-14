@@ -1,12 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/chzyer/readline"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -58,8 +59,12 @@ func cmdStart() {
 
 	for {
 		// --- 計画 ---
-		goal, err := readLine("What will you work on during this session? > ")
-		if err != nil {
+		goal, err := readLine("今回のフォーカスで“達成したいゴール”を入力してください")
+		switch {
+		case errors.Is(err, readline.ErrInterrupt):
+			fmt.Println("セッションを中断しました")
+			return
+		case err != nil:
 			fmt.Println("input error:", err)
 			return
 		}
@@ -74,8 +79,12 @@ func cmdStart() {
 		end := time.Now().UTC()
 
 		// --- 振り返り ---
-		retro, err := readLine("What did you accomplish? > ")
-		if err != nil {
+		retro, err := readLine("終わってみて、気づき・感想をどうぞ")
+		switch {
+		case errors.Is(err, readline.ErrInterrupt):
+			fmt.Println("セッションを中断しました")
+			return
+		case err != nil:
 			fmt.Println("input error:", err)
 			return
 		}
@@ -101,16 +110,7 @@ func cmdStart() {
 		}
 		fmt.Print("\a")
 
-		// --- 継続確認 ---
-		ans, err := readLine("Start another session? [y/n] > ")
-		if err != nil {
-			fmt.Println("input error:", err)
-			return
-		}
-		if !strings.HasPrefix(strings.ToLower(ans), "y") {
-			break
-		}
-		fmt.Println("========================")
+		fmt.Println("\n — next session — \n")
 	}
 }
 
@@ -145,17 +145,46 @@ func printTimerError(err error) {
 }
 
 func readLine(prompt string) (string, error) {
-	fmt.Print(prompt)
+	done := false
 
-	// fmt.Scanを使わないのはfmt.Scanではスペースが入れられないため。
-	// "Set a goal" -> "Set"しか取得できない
-	scanner := bufio.NewScanner(os.Stdin)
-	if !scanner.Scan() {
-		return "", scanner.Err()
+	fmt.Printf("%v\n(Enterで改行 / Ctrl+Dで送信 / Ctrl+Cで終了) > \n", prompt)
+
+	cfg := &readline.Config{
+		Prompt:              "",
+		UniqueEditLine:      false,
+		ForceUseInteractive: true,
+		FuncFilterInputRune: func(r rune) (rune, bool) {
+			if r == readline.CharDelete { // Ctrl-D で送信したい
+				done = true
+				return '\n', true // ← 改行を“入力した”ことにする
+			}
+			return r, true // 通常処理
+		},
 	}
-	// 1. タイプミスで前後にスペースを入れた → Goal / Goal のままログ保存すると、テストや JSON で比較しづらい
-	// 2. Scanner は \n 区切りで読み込むが、Windows 環境の \r\n だと \r が残ることがある（"\r"）
-	//     → yes\r と比較すると strings.ToLower(oneMore) が "yes\r" になり、HasPrefix("y") が通らない
-	// 上記の理由によりstrings.TrimSpaceを行う
-	return strings.TrimSpace(scanner.Text()), nil
+	rl, err := readline.NewEx(cfg)
+	if err != nil {
+		return "", fmt.Errorf("readline init: %w", err)
+	}
+	defer rl.Close()
+
+	var sb strings.Builder
+	for {
+		line, err := rl.Readline()
+		switch {
+		case err == nil:
+			sb.WriteString(line)
+
+			if done {
+				return sb.String(), nil
+			}
+
+			sb.WriteString("\n")
+		case errors.Is(err, readline.ErrInterrupt):
+			return "", err // 上位で Ctrl-C 判定
+		case err == io.EOF:
+			return sb.String(), nil
+		default:
+			return "", err // 予期せぬエラー
+		}
+	}
 }
