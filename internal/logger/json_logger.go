@@ -18,7 +18,11 @@ func NewJsonLogger(root string) Logger {
 }
 
 func NewDefaultJsonLogger() Logger {
-	return &JsonLogger{root: getDefaultRoot()}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = ""
+	}
+	return NewJsonLogger(filepath.Join(home, ".reflo/logs"))
 }
 
 func (l *JsonLogger) Write(session Session) error {

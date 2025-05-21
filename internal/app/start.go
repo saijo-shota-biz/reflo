@@ -6,34 +6,28 @@ import (
 	"fmt"
 	"github.com/chzyer/readline"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
-	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"io"
-	"os"
-	"os/signal"
 	"strings"
 	"time"
 )
 
-func (app *App) Start() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
+func (app *App) Start(ctx context.Context) error {
 	for {
 		// --- 計画 ---
 		goal, err := app.readLine("今回のフォーカスで“達成したいゴール”を入力してください")
 		switch {
 		case errors.Is(err, readline.ErrInterrupt):
 			fmt.Println("セッションを中断しました")
-			return
+			return nil
 		case err != nil:
 			fmt.Println("input error:", err)
-			return
+			return nil
 		}
 
 		// --- フォーカス ---
 		start := time.Now().UTC()
-		fmt.Printf("Focusing %v …\n", app.cfg.DefaultFocus)
-		if err := timer.New(app.cfg.DefaultFocus).Wait(ctx); err != nil {
+		fmt.Printf("Focusing %v …\n", app.Cfg.FocusDuration)
+		if err := app.Timer.Focus(ctx); err != nil {
 			printTimerError(err)
 		}
 		fmt.Print("\a")
@@ -44,15 +38,15 @@ func (app *App) Start() {
 		switch {
 		case errors.Is(err, readline.ErrInterrupt):
 			fmt.Println("セッションを中断しました")
-			return
+			return nil
 		case err != nil:
 			fmt.Println("input error:", err)
-			return
+			return nil
 		}
 
 		// --- ログ ---
 		fmt.Printf("%v ~ %v\n", start.Format("2006-01-02 15:04"), end.Format("15:04"))
-		err = app.logger.Write(logger.Session{
+		err = app.Logger.Write(logger.Session{
 			StartTime: start,
 			EndTime:   end,
 			Goal:      goal,
@@ -60,17 +54,19 @@ func (app *App) Start() {
 		})
 		if err != nil {
 			fmt.Println("Error:", err)
-			return
+			return nil
 		}
 
 		// --- 休憩 ---
-		fmt.Printf("Break %v …\n", app.cfg.DefaultBreak)
-		if err := timer.New(app.cfg.DefaultBreak).Wait(ctx); err != nil {
+		fmt.Printf("Break %v …\n", app.Cfg.BreakDuration)
+		if err := app.Timer.Break(ctx); err != nil {
 			printTimerError(err)
 		}
 		fmt.Print("\a")
 
-		fmt.Println("\n — next session — \n")
+		fmt.Println("")
+		fmt.Println("— next session — ")
+		fmt.Println("")
 	}
 }
 
@@ -101,8 +97,8 @@ func (app *App) readLine(prompt string) (string, error) {
 			}
 			return r, true // 通常処理
 		},
-		Stdin:  app.cfg.PromptIn,
-		Stdout: app.cfg.PromptOut,
+		Stdin:  app.Cfg.PromptIn,
+		Stdout: app.Cfg.PromptOut,
 	}
 	rl, err := readline.NewEx(cfg)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 )
 
 func (app *App) EndDay() {
-	sessions, err := app.logger.ReadDay()
+	sessions, err := app.Logger.ReadDay()
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

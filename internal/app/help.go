@@ -2,12 +2,11 @@ package app
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 )
 
-func (app *App) Help() {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+func (app *App) Help() error {
+	w := tabwriter.NewWriter(app.Cfg.PromptOut, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "reflo - Pomodoro-style focus logger")
 	fmt.Fprintln(w, "USAGE:")
 	fmt.Fprintln(w, "  reflo <command>")
@@ -18,5 +17,5 @@ func (app *App) Help() {
 	fmt.Fprintln(w, "EXAMPLES:")
 	fmt.Fprintln(w, "  reflo start")
 	fmt.Fprintln(w, "  reflo end-day")
-	w.Flush()
+	return w.Flush()
 }

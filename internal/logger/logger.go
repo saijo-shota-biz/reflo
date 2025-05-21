@@ -1,8 +1,6 @@
 package logger
 
 import (
-	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -16,12 +14,4 @@ type Session struct {
 type Logger interface {
 	Write(session Session) error
 	ReadDay() ([]Session, error)
-}
-
-func getDefaultRoot() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ".reflo/logs"
-	}
-	return filepath.Join(home, ".reflo/logs")
 }
