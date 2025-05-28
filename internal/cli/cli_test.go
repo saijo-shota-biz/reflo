@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"errors"
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	mock_logger "github.com/saijo-shota-biz/reflo/mock/logger"
@@ -76,8 +75,6 @@ func TestCLI_New(t *testing.T) {
 }
 
 func TestCLI_Run(t *testing.T) {
-	ctx := context.Background()
-
 	tests := []struct {
 		name      string
 		cmd       cmd
@@ -89,7 +86,7 @@ func TestCLI_Run(t *testing.T) {
 			cmd:  Start,
 			setup: func(m *mock_runner.MockRunner) {
 				m.EXPECT().
-					Start(ctx).
+					Start().
 					Return(nil) // 正常終了
 			},
 		},
@@ -116,7 +113,7 @@ func TestCLI_Run(t *testing.T) {
 			cmd:  Start,
 			setup: func(m *mock_runner.MockRunner) {
 				m.EXPECT().
-					Start(ctx).
+					Start().
 					Return(errors.New("boom"))
 			},
 			expectErr: true,
@@ -136,7 +133,7 @@ func TestCLI_Run(t *testing.T) {
 				command: tt.cmd,
 			}
 
-			err := c.Run(ctx)
+			err := c.Run()
 			if tt.expectErr {
 				require.Error(t, err)
 			} else {

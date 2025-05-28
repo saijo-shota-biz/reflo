@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/saijo-shota-biz/reflo/internal/cli"
 	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -18,9 +15,7 @@ func main() {
 	}
 
 	// 実行
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	if err := c.Run(ctx); err != nil {
+	if err := c.Run(); err != nil {
 		fmt.Println("CLI run failed", "err", err)
 		os.Exit(1)
 	}

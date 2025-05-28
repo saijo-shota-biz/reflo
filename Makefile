@@ -1,4 +1,4 @@
-.PHONY: start build test tidy
+.PHONY: start build test tidy generate
 
 GOFLAGS = -trimpath
 
@@ -10,6 +10,9 @@ build:
 
 test:
 	go test ./...
+
+generate:
+	go generate ./...
 
 tidy:
 	go mod tidy

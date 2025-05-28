@@ -10,7 +10,6 @@
 package mock_runner
 
 import (
-	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -67,15 +66,15 @@ func (mr *MockRunnerMockRecorder) Help() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockRunner) Start(ctx context.Context) error {
+func (m *MockRunner) Start() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start", ctx)
+	ret := m.ctrl.Call(m, "Start")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockRunnerMockRecorder) Start(ctx any) *gomock.Call {
+func (mr *MockRunnerMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRunner)(nil).Start), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRunner)(nil).Start))
 }

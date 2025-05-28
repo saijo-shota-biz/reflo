@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
@@ -123,10 +122,10 @@ func New(args []string, opts ...Option) (*CLI, error) {
 	return &CLI{app: d.runner, command: command}, nil
 }
 
-func (c *CLI) Run(ctx context.Context) error {
+func (c *CLI) Run() error {
 	switch c.command {
 	case Start:
-		if err := c.app.Start(ctx); err != nil {
+		if err := c.app.Start(); err != nil {
 			return err
 		}
 	case EndDay:

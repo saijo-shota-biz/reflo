@@ -1,10 +1,10 @@
 package app
 
 import (
-	"context"
 	"errors"
 	"github.com/chzyer/readline"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
+	"github.com/saijo-shota-biz/reflo/internal/testutil"
 	mock_logger "github.com/saijo-shota-biz/reflo/mock/logger"
 	mock_prompt "github.com/saijo-shota-biz/reflo/mock/prompt"
 	mock_timer "github.com/saijo-shota-biz/reflo/mock/timer"
@@ -17,8 +17,8 @@ import (
 )
 
 func TestApp_Start(t *testing.T) {
-	goalPrompt := "今回のフォーカスで“達成したいゴール”を入力してください"
-	retroPrompt := "終わってみて、気づき・感想をどうぞ"
+	goalPrompt := "✏️ このセッションで“完了したいゴール”を入力してください"
+	retroPrompt := "✏️ セッションを通しての気づき・感想をどうぞ"
 
 	tests := []struct {
 		name      string
@@ -59,20 +59,21 @@ func TestApp_Start(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "Retro読み取り時にCtrl+Cすると、タイマーが動かず、ログも書き込まれない",
+			name: "Retro読み取り時にCtrl+Cしても、空文字列扱いでログが書き込まれ、休憩も行う",
 			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
 				gomock.InOrder(
 					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
 					mt.EXPECT().Focus(gomock.Any()).Return(nil),
 					mr.EXPECT().ReadLine(retroPrompt).Return("", readline.ErrInterrupt),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(nil),
+					mt.EXPECT().Break(gomock.Any()).Return(nil),
+					mr.EXPECT().ReadLine(gomock.Any()).Return("", readline.ErrInterrupt),
 				)
-				ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0)
-				mt.EXPECT().Break(gomock.Any()).Times(0)
 			},
 			expectErr: false,
 		},
 		{
-			name: "Focusタイマーでのキャンセルが発生したときに、Retroへ進むこと",
+			name: "Focusタイマーでのキャンセルが発生したときに、Retroへ進む",
 			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
 				gomock.InOrder(
 					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
@@ -100,7 +101,7 @@ func TestApp_Start(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, testutil.SilenceStdout(func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -120,13 +121,12 @@ func TestApp_Start(t *testing.T) {
 
 			a := New(cfg, mLogger, mTimer, mReader)
 
-			ctx := context.Background()
-			err := a.Start(ctx)
+			err := a.Start()
 			if tt.expectErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
-		})
+		}))
 	}
 }
