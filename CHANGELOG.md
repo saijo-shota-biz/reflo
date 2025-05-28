@@ -23,6 +23,22 @@ and adheres to [Semantic Versioning](https://semver.org).
 
 ---
 
+## [1.2.0] – 2025-05-28
+
+### Added
+* **Human-readable durations** – session summaries now show `25m`, `1h07m`, etc. instead of raw seconds.
+
+### Changed
+* **End-time capture moved** – the session now finishes *after* the retrospective, so the reported duration includes your reflection time.
+* **Unified Japanese CLI messages** with clear icons (⏳ / ✅ / ⚠️ …) for better at-a-glance feedback.
+* **Refined `Ctrl+C` behaviour** – cancelling during focus skips only that focus; cancelling during break skips only that break.
+
+### Fixed
+* Break timers no longer get canceled when a focus timer is skipped with `Ctrl+C`.
+* A session is still logged even if you cancel the retrospective prompt.
+
+---
+
 ## [1.1.0] – 2025-05-17
 
 ### Added
