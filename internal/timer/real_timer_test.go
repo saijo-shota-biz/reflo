@@ -19,9 +19,9 @@ func TestRealTimer_FocusAndBreak(t *testing.T) {
 		Focus: focusDur,
 		Break: breakDur,
 	}
-	tm := New(config)
+	tm := NewRealTimer(config)
 
-	t.Run("Focusしたら設定したFocus時間待つこと", func(t *testing.T) {
+	t.Run("Focusしたら設定したFocus時間待つ", func(t *testing.T) {
 		// Arrange
 		start := time.Now()
 
@@ -33,7 +33,7 @@ func TestRealTimer_FocusAndBreak(t *testing.T) {
 		require.InDelta(t, focusDur, time.Since(start), float64(delta))
 	})
 
-	t.Run("BreakしたらBreak時間待つこと", func(t *testing.T) {
+	t.Run("BreakしたらBreak時間待つ", func(t *testing.T) {
 		// Arrange
 		start := time.Now()
 
@@ -52,9 +52,9 @@ func TestRealTimer_ZeroDurationReturnsImmediately(t *testing.T) {
 		Focus: 0 * time.Second,
 		Break: 0 * time.Second,
 	}
-	tm := New(config)
+	tm := NewRealTimer(config)
 
-	t.Run("Focus時間が0秒の設定の場合、即時リターンされること", func(t *testing.T) {
+	t.Run("Focus時間が0秒の設定のとき、即時リターンされる", func(t *testing.T) {
 		start := time.Now()
 
 		// Act
@@ -66,7 +66,7 @@ func TestRealTimer_ZeroDurationReturnsImmediately(t *testing.T) {
 		require.LessOrEqual(t, elapsed, delta)
 	})
 
-	t.Run("Break時間が0秒の設定の場合、即時リターンされること", func(t *testing.T) {
+	t.Run("Break時間が0秒の設定のとき、即時リターンされる", func(t *testing.T) {
 		start := time.Now()
 
 		// Act
@@ -80,36 +80,39 @@ func TestRealTimer_ZeroDurationReturnsImmediately(t *testing.T) {
 }
 
 func TestRealTimer_RepeatFocusWaitsAgain(t *testing.T) {
-	// Arrange
-	config := Config{Focus: focusDur}
-	tm := New(config)
+	t.Run("タイマーを２回スタートしたら、２回とも指定時間待つ", func(t *testing.T) {
+		// Arrange
+		config := Config{Focus: focusDur}
+		tm := NewRealTimer(config)
 
-	// Act And Assert
-	start1 := time.Now()
-	require.NoError(t, tm.Focus(context.Background()))
-	require.InDelta(t, focusDur, time.Since(start1), float64(delta))
+		// Act And Assert
+		start1 := time.Now()
+		require.NoError(t, tm.Focus(context.Background()))
+		require.InDelta(t, focusDur, time.Since(start1), float64(delta))
 
-	start2 := time.Now()
-	require.NoError(t, tm.Focus(context.Background()))
-	require.InDelta(t, focusDur, time.Since(start2), float64(delta))
+		start2 := time.Now()
+		require.NoError(t, tm.Focus(context.Background()))
+		require.InDelta(t, focusDur, time.Since(start2), float64(delta))
+	})
 }
-
 func TestRealTimer_WaitCancel(t *testing.T) {
-	// Arrange
-	config := Config{Focus: 200 * time.Millisecond}
-	tm := New(config)
-	start := time.Now()
+	t.Run("タイマーを途中でキャンセルしたら、ブロックが解除される", func(t *testing.T) {
+		// Arrange
+		config := Config{Focus: 200 * time.Millisecond}
+		tm := NewRealTimer(config)
+		start := time.Now()
 
-	// Act
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(50 * time.Millisecond)
-		cancel()
-	}()
-	err := tm.Focus(ctx)
+		// Act
+		ctx, cancel := context.WithCancel(context.Background())
+		go func() {
+			time.Sleep(50 * time.Millisecond)
+			cancel()
+		}()
+		err := tm.Focus(ctx)
 
-	// Assert
-	elapsed := time.Since(start)
-	require.Less(t, elapsed, 100*time.Millisecond+20*time.Millisecond)
-	require.ErrorIs(t, err, context.Canceled)
+		// Assert
+		elapsed := time.Since(start)
+		require.Less(t, elapsed, 100*time.Millisecond+20*time.Millisecond)
+		require.ErrorIs(t, err, context.Canceled)
+	})
 }

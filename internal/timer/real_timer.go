@@ -14,7 +14,7 @@ type realTimer struct {
 	cfg Config
 }
 
-func New(cfg Config) Timer {
+func NewRealTimer(cfg Config) Timer {
 	return &realTimer{cfg: cfg}
 }
 

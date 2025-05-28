@@ -6,6 +6,7 @@ import (
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	faker "github.com/saijo-shota-biz/reflo/internal/cli/fake"
 	fakel "github.com/saijo-shota-biz/reflo/internal/logger/fake"
+	fakep "github.com/saijo-shota-biz/reflo/internal/prompt/fake"
 	faket "github.com/saijo-shota-biz/reflo/internal/timer/fake"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -18,10 +19,10 @@ func TestCLI_ParseCmd(t *testing.T) {
 		want    cmd
 		wantErr bool
 	}{
-		{"start OK", "start", Start, false},
-		{"end-day OK", "end-day", EndDay, false},
-		{"help OK", "help", Help, false},
-		{"unknown command", "unknown", Unknown, true},
+		{"startコマンドが入力されたとき、Startが返る", "start", Start, false},
+		{"end-dayコマンドが入力されたとき、EndDayが返る", "end-day", EndDay, false},
+		{"helpコマンドが入力されたとき、Helpが返る", "help", Help, false},
+		{"start, end-day, help以外の未設定コマンドが入力されたとき、Unknownが返る", "unknown", Unknown, true},
 	}
 
 	for _, tt := range tests {
@@ -38,25 +39,27 @@ func TestCLI_ParseCmd(t *testing.T) {
 }
 
 func TestCLI_New(t *testing.T) {
-	t.Run("too few args", func(t *testing.T) {
+	t.Run("refloのみで引数が少ないとき、エラーが返る", func(t *testing.T) {
 		_, err := New([]string{"reflo"})
 		require.Error(t, err)
 	})
 
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("reflo startが入力されたとき、CLIがstartコマンドで初期化されたインスタンスが返却される", func(t *testing.T) {
 		cli, err := New([]string{"reflo", "start"})
 		require.NoError(t, err)
 		require.Equal(t, Start, cli.command)
 		require.NotNil(t, cli.app)
 	})
 
-	t.Run("has options", func(t *testing.T) {
+	t.Run("初期化時にオプションが設定されていたら、CLIインスタンスの依存がデフォルトから上書きされて返却される", func(t *testing.T) {
 		fakeLogger := &fakel.Logger{}
 		fakeTimer := &faket.Timer{}
+		fakeReader := &fakep.Reader{}
 		cli, err := New(
 			[]string{"reflo", "start"},
 			WithLogger(fakeLogger),
 			WithTimer(fakeTimer),
+			WithReader(fakeReader),
 		)
 
 		require.NoError(t, err)
@@ -79,10 +82,10 @@ func TestCLI_Run(t *testing.T) {
 		mockErr      error
 		expectRunErr bool
 	}{
-		{"calls Start", Start, true, false, false, nil, false},
-		{"calls EndDay", EndDay, false, true, false, nil, false},
-		{"calls Help", Help, false, false, true, nil, false},
-		{"propagates error", Start, true, false, false, errors.New("boom"), true},
+		{"startコマンドの時、runner.Start関数が呼び出される", Start, true, false, false, nil, false},
+		{"end-dayコマンドの時、runner.EndDay関数が呼び出される", EndDay, false, true, false, nil, false},
+		{"helpコマンドの時、runner.Help関数が呼び出される", Help, false, false, true, nil, false},
+		{"runner.Start関数でエラーが発生した時、エラーが返る", Start, true, false, false, errors.New("boom"), true},
 	}
 
 	for _, tt := range tests {

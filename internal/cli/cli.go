@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
+	"github.com/saijo-shota-biz/reflo/internal/prompt"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
 	"time"
@@ -46,17 +47,20 @@ type deps struct {
 	runner Runner
 	logger logger.Logger
 	timer  timer.Timer
+	reader prompt.Reader
 }
 
 func defaultDeps(cfg app.Config) *deps {
 	l := logger.NewDefaultJsonLogger()
-	t := timer.New(timer.Config{
+	t := timer.NewRealTimer(timer.Config{
 		Focus: cfg.FocusDuration,
 		Break: cfg.BreakDuration,
 	})
+	r := prompt.NewTerminalReader(cfg.PromptIn, cfg.PromptOut)
 	return &deps{
 		logger: l,
 		timer:  t,
+		reader: r,
 	}
 }
 
@@ -75,6 +79,12 @@ func WithLogger(l logger.Logger) Option {
 func WithTimer(t timer.Timer) Option {
 	return func(d *deps) {
 		d.timer = t
+	}
+}
+
+func WithReader(r prompt.Reader) Option {
+	return func(d *deps) {
+		d.reader = r
 	}
 }
 
@@ -107,7 +117,7 @@ func New(args []string, opts ...Option) (*CLI, error) {
 	}
 
 	if d.runner == nil {
-		d.runner = app.New(cfg, d.logger, d.timer)
+		d.runner = app.New(cfg, d.logger, d.timer, d.reader)
 	}
 
 	return &CLI{app: d.runner, command: command}, nil
