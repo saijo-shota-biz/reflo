@@ -11,6 +11,8 @@ type Session struct {
 	Retro     string
 }
 
+//go:generate mockgen -source=logger.go -destination=../../mock/logger/logger_mock.go -package=mock_logger
+
 type Logger interface {
 	Write(session Session) error
 	ReadDay() ([]Session, error)

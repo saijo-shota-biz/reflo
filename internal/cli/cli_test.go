@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/saijo-shota-biz/reflo/internal/app"
-	faker "github.com/saijo-shota-biz/reflo/internal/cli/fake"
-	fakel "github.com/saijo-shota-biz/reflo/internal/logger/fake"
-	fakep "github.com/saijo-shota-biz/reflo/internal/prompt/fake"
-	faket "github.com/saijo-shota-biz/reflo/internal/timer/fake"
+	mock_logger "github.com/saijo-shota-biz/reflo/mock/logger"
+	mock_prompt "github.com/saijo-shota-biz/reflo/mock/prompt"
+	mock_runner "github.com/saijo-shota-biz/reflo/mock/runner"
+	mock_timer "github.com/saijo-shota-biz/reflo/mock/timer"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"testing"
 )
 
@@ -52,9 +53,12 @@ func TestCLI_New(t *testing.T) {
 	})
 
 	t.Run("初期化時にオプションが設定されていたら、CLIインスタンスの依存がデフォルトから上書きされて返却される", func(t *testing.T) {
-		fakeLogger := &fakel.Logger{}
-		fakeTimer := &faket.Timer{}
-		fakeReader := &fakep.Reader{}
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		fakeLogger := mock_logger.NewMockLogger(ctrl)
+		fakeTimer := mock_timer.NewMockTimer(ctrl)
+		fakeReader := mock_prompt.NewMockReader(ctrl)
 		cli, err := New(
 			[]string{"reflo", "start"},
 			WithLogger(fakeLogger),
@@ -64,9 +68,10 @@ func TestCLI_New(t *testing.T) {
 
 		require.NoError(t, err)
 		appImpl, ok := cli.app.(*app.App)
-		require.True(t, ok, "app should be an *app.App")
-		require.Same(t, appImpl.Logger, fakeLogger, "logger not overridden")
-		require.Same(t, appImpl.Timer, fakeTimer, "timer not overridden")
+		require.True(t, ok)
+		require.Same(t, appImpl.Logger, fakeLogger)
+		require.Same(t, appImpl.Timer, fakeTimer)
+		require.Same(t, appImpl.Reader, fakeReader)
 	})
 }
 
@@ -74,35 +79,69 @@ func TestCLI_Run(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name         string
-		cmd          cmd
-		wantStart    bool
-		wantEndDay   bool
-		wantHelp     bool
-		mockErr      error
-		expectRunErr bool
+		name      string
+		cmd       cmd
+		setup     func(m *mock_runner.MockRunner)
+		expectErr bool
 	}{
-		{"startコマンドの時、runner.Start関数が呼び出される", Start, true, false, false, nil, false},
-		{"end-dayコマンドの時、runner.EndDay関数が呼び出される", EndDay, false, true, false, nil, false},
-		{"helpコマンドの時、runner.Help関数が呼び出される", Help, false, false, true, nil, false},
-		{"runner.Start関数でエラーが発生した時、エラーが返る", Start, true, false, false, errors.New("boom"), true},
+		{
+			name: "start ⇒ Runner.Start が 1 回呼ばれる",
+			cmd:  Start,
+			setup: func(m *mock_runner.MockRunner) {
+				m.EXPECT().
+					Start(ctx).
+					Return(nil) // 正常終了
+			},
+		},
+		{
+			name: "end-day ⇒ Runner.EndDay が 1 回呼ばれる",
+			cmd:  EndDay,
+			setup: func(m *mock_runner.MockRunner) {
+				m.EXPECT().
+					EndDay().
+					Return()
+			},
+		},
+		{
+			name: "help ⇒ Runner.Help が 1 回呼ばれる",
+			cmd:  Help,
+			setup: func(m *mock_runner.MockRunner) {
+				m.EXPECT().
+					Help().
+					Return(nil)
+			},
+		},
+		{
+			name: "Runner.Start がエラーを返すと Run もエラー",
+			cmd:  Start,
+			setup: func(m *mock_runner.MockRunner) {
+				m.EXPECT().
+					Start(ctx).
+					Return(errors.New("boom"))
+			},
+			expectErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &faker.Runner{Err: tt.mockErr}
-			cli := &CLI{app: f, command: tt.cmd}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			err := cli.Run(ctx)
+			runner := mock_runner.NewMockRunner(ctrl)
+			tt.setup(runner) // 期待値の仕込み
 
-			if tt.expectRunErr {
+			c := &CLI{
+				app:     runner,
+				command: tt.cmd,
+			}
+
+			err := c.Run(ctx)
+			if tt.expectErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
-			require.Equal(t, tt.wantStart, f.StartCalled)
-			require.Equal(t, tt.wantEndDay, f.EndDayCalled)
-			require.Equal(t, tt.wantHelp, f.HelpCalled)
 		})
 	}
 }
