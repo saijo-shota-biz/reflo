@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reflo - Reflect × Flow × Log</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .terminal {
+      background-color: #252526;
+      border: 1px solid #555;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section-title {
+      color: #ce9178;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+    }
+    .section-body {
+      margin-top: 1rem;
+      padding-right: 2rem;
+      padding-left: 2rem;
+    }
+    .separator {
+      color: #666;
+    }
+    a {
+      color: #9cdcfe;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+<div class="terminal" id="terminal">
+  $ reflo start
+
+  [今回のフォーカスで達成したいゴールは？]
+  > 記事の構成を30分で練る！
+
+  ... ⏱️ 25:00 集中モード突入中 ...
+
+  [終わってみて、気づき・感想をどうぞ]
+  > 時間区切るだけで集中力が段違いだった。気持ちよく進んだ。
+
+  ✔ ナイスセッション！
+  📁 ログは今日の資産として保存されました。
+</div>
+
+<div class="section">
+  <div class="section-title">🧠 どう進めるかの時代へ</div>
+  <div class="section-body">
+    <p>「なにをやるか」より「どう進めるか」が大事だと思ったことはありませんか？</p>
+    <p>refloは、25分の集中作業（ポモドーロ）に</p>
+    <p>目標と振り返りを組み合わせることで、</p>
+    <p>ただの作業を「意味ある前進」に変えるCLIツールです。</p>
+  </div>
+</div>
+
+<div class="separator">────────────────────────────────────────</div>
+
+<div class="section">
+  <div class="section-title">🔁 あなたの行動に、リズムと意図を。</div>
+  <div class="section-body">
+    <p>Before: 今日もなんとなく始めて、なんとなく終わる</p>
+    <p>After : 目的を言葉にし、行動の記録が資産になる</p>
+    <p style="margin-top:48px">refloは、1セッションごとに小さな目標を宣言し、</p>
+    <p>終わったあとには気づきや改善点を記録します。</p>
+    <p>このサイクルが、あなたを進化させます。</p>
+  </div>
+</div>
+
+<div class="separator">────────────────────────────────────────</div>
+
+<div class="section">
+  <div class="section-title">🔍 自分の「クセ」を可視化するログ資産</div>
+  <div class="section-body">
+    <p>毎日の記録は、AIに学ばせる価値ある「自分データ」。</p>
+    <p>refloは、その第一歩を超軽量CLIでサポートします。</p>
+    <p>あなたの内省を、もっと速く、深く、自然に。</p>
+  </div>
+</div>
+
+<div class="separator">────────────────────────────────────────</div>
+
+<div class="section">
+  <div class="section-title">Try it now</div>
+  <ul>
+    <li>📦 <a href="https://github.com/saijo-shota-biz/reflo" target="_blank">GitHub</a></li>
+    <li>🍺 <code>brew tap saijo-shota-biz/homebrew-reflo</code></li>
+    <li>🍺 <code>brew install reflo</code></li>
+    <li>📘 <a href="https://github.com/saijo-shota-biz/reflo/blob/main/README.md" target="_blank">README</a></li>
+  </ul>
+</div>
+
+<div class="section">
+  <div class="section-title">from the creator</div>
+  <div class="section-body">
+    <div style="margin-top:32px">
+      <p>アジャイルに入門した頃から、短い時間での目標宣言と振り返りのフィードバックループの大切さを学びました。</p>
+      <p>でも、仕事に追われる日々の中で振り返りを忘れてしまい、１週間も経つと「先週、自分は何をしていたんだっけ？」と思うことがよくありました。</p>
+      <p>そこで、ポモドーロタイマーに「目標の宣言」と「振り返りの記録」を組み合わせて、</p>
+      <p>25分ごとに何に集中するのかを言葉にし、終わったあとにどう感じたかをログとして残すCLIアプリを作りました。</p>
+    </div>
+    <div style="margin-top:32px">
+      <p>ChatGPTがチャット履歴全体を参照できるようになったとき、</p>
+      <p>「これは、自分の行動ログを積み上げてAIに分析してもらえる時代が来る」と確信しました。</p>
+      <p>そして、このログは自己改善を加速させる大きな資産になると考えるようになりました。</p>
+    </div>
+    <div style="margin-top:32px">
+      <p>作業前に宣言し、作業後に振り返る。</p>
+      <p>それはつまり、大きなタスクを短時間で終えられる小さな単位に分解するということでもあります。</p>
+      <p>これは、若手エンジニアにとってタスク分割の練習にもなりますし、25分で自分が何をどこまでできるかを知ることで、見積もり精度も上がっていきます。</p>
+    </div>
+    <div style="margin-top:32px">
+      <p>僕自身も実際に使っていて、まだまだタスクの分解がうまくできていないなと感じることがあります。</p>
+      <p>宣言したことじゃないタスク、たとえばSlackの返信に気を取られてしまうこともよくあります。</p>
+      <p>でも、だからこそ、このrefloを作って、使いながら、少しずつ改善を続けていこうと思っています。</p>
+      <p>もしよかったら、あなたも一緒に始めてみませんか？</p>
+    </div>
+
+    <p style="margin-top:32px">saijo shota</p>
+  </div>
+</div>
+</body>
+</html>
