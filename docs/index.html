@@ -5,136 +5,479 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>reflo - Reflect × Flow × Log</title>
   <style>
-    body {
-      background-color: #1e1e1e;
-      color: #d4d4d4;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-      line-height: 1.6;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .terminal {
-      background-color: #252526;
-      border: 1px solid #555;
-      padding: 1rem;
+
+    body {
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      color: #e0e0e0;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ASCII Art Header */
+    .ascii-header {
+      text-align: center;
+      margin: 3rem 0 4rem 0;
+      font-size: 0.75rem;
+      line-height: 1.2;
+      color: #4a9eff;
+      text-shadow: 0 0 10px rgba(74, 158, 255, 0.3);
+    }
+
+    .logo-text {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #ff6b6b;
+      margin: 1rem 0;
+      text-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+      letter-spacing: 0.1em;
+    }
+
+    .tagline {
+      color: #4ecdc4;
+      font-size: 1.1rem;
       margin-bottom: 2rem;
-      white-space: pre-wrap;
+      opacity: 0.9;
+    }
+
+    /* Enhanced Terminal */
+    .terminal-window {
+      background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
+      border: 1px solid #404040;
+      border-radius: 12px;
+      margin: 3rem 0;
+      box-shadow:
+              0 20px 40px rgba(0,0,0,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      background: linear-gradient(90deg, #2d2d2d, #363636);
+      padding: 0.8rem 1.2rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #404040;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 0.5rem;
+      margin-right: 1rem;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .dot.red { background: linear-gradient(135deg, #ff5f56, #ff3b30); }
+    .dot.yellow { background: linear-gradient(135deg, #ffbd2e, #ff9500); }
+    .dot.green { background: linear-gradient(135deg, #27ca3f, #30d158); }
+
+    .terminal-title {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .terminal-content {
+      padding: 1.5rem;
+      background: #1a1a1a;
+      font-size: 0.95rem;
+      line-height: 1.8;
       overflow-x: auto;
     }
+
+    .prompt { color: #4ade80; }
+    .user-input { color: #fbbf24; }
+    .system-msg { color: #60a5fa; }
+    .success { color: #34d399; }
+    .file-path { color: #a78bfa; }
+
+    /* Section Styling */
     .section {
-      margin-bottom: 2rem;
+      margin: 4rem 0;
+      padding: 2.5rem;
+      background: linear-gradient(145deg, rgba(30,30,30,0.6), rgba(40,40,40,0.4));
+      border-left: 4px solid;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+
+    .section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .section:nth-child(odd) { border-left-color: #ff6b6b; }
+    .section:nth-child(even) { border-left-color: #4ecdc4; }
+
     .section-title {
-      color: #ce9178;
+      font-size: 1.5rem;
       font-weight: bold;
-      font-size: 1.2rem;
-      margin-top: 2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
     }
-    .section-body {
-      margin-top: 1rem;
-      padding-right: 2rem;
-      padding-left: 2rem;
+
+    .section:nth-child(odd) .section-title { color: #ff6b6b; }
+    .section:nth-child(even) .section-title { color: #4ecdc4; }
+
+    .section-body p {
+      margin-bottom: 1rem;
+      color: #d1d5db;
+      font-size: 1rem;
     }
-    .separator {
-      color: #666;
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      margin: 3rem 0;
     }
-    a {
-      color: #9cdcfe;
+
+    .feature-card {
+      background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #404040;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #4a9eff);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    /* Before/After Comparison */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .before, .after {
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid;
+    }
+
+    .before {
+      background: rgba(220, 38, 38, 0.1);
+      border-color: #dc2626;
+    }
+
+    .after {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22c55e;
+    }
+
+    .before::before { content: "❌ Before:"; color: #dc2626; font-weight: bold; display: block; margin-bottom: 0.5rem; }
+    .after::before { content: "✅ After:"; color: #22c55e; font-weight: bold; display: block; margin-bottom: 0.5rem; }
+
+    /* Installation Section */
+    .install-section {
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 3rem;
+      margin: 3rem 0;
+    }
+
+    .install-title {
+      color: #4ade80;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .install-card {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #475569;
+    }
+
+    .install-card h4 {
+      color: #fbbf24;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .install-card code {
+      display: block;
+      background: #0f172a;
+      color: #4ade80;
+      padding: 0.8rem;
+      border-radius: 6px;
+      margin: 0.5rem 0;
+      border: 1px solid #1e293b;
+      font-family: inherit;
+    }
+
+    .install-card a {
+      color: #60a5fa;
       text-decoration: none;
+      transition: color 0.3s ease;
     }
-    a:hover {
+
+    .install-card a:hover {
+      color: #93c5fd;
       text-decoration: underline;
+    }
+
+    /* Message from Creator */
+    .creator-message {
+      background: linear-gradient(145deg, #1f1f1f, #2d2d2d);
+      border: 1px solid #4a5568;
+      border-radius: 12px;
+      padding: 3rem;
+      margin: 4rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .creator-message::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #4a9eff, #a78bfa);
+    }
+
+    .creator-title {
+      color: #fbbf24;
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .message-block {
+      margin: 2rem 0;
+      padding-left: 1rem;
+      border-left: 2px solid #4a5568;
+    }
+
+    .signature {
+      text-align: right;
+      color: #9ca3af;
+      font-style: italic;
+      margin-top: 2rem;
+      font-size: 1.1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      .ascii-header { font-size: 0.6rem; }
+      .logo-text { font-size: 2rem; }
+      .comparison { grid-template-columns: 1fr; }
+      .install-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+
+      .section {
+        padding: 1.5rem;
+        margin: 2rem 0;
+      }
+
+      .install-section {
+        padding: 2rem;
+        margin: 2rem 0;
+      }
+    }
+
+    /* Subtle animations */
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 10px rgba(74, 158, 255, 0.3); }
+      50% { text-shadow: 0 0 20px rgba(74, 158, 255, 0.6); }
+    }
+
+    .ascii-header {
+      animation: glow 3s ease-in-out infinite;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-<div class="terminal" id="terminal">
-  $ reflo start
+<div class="container">
+  <header class="ascii-header">
+    <pre>Reflect × Flow × Log</pre>
+    <div class="logo-text">reflo</div>
+    <div class="tagline">25分の集中 × 目標宣言 × 振り返り = あなたの進化</div>
+  </header>
 
-  [今回のフォーカスで達成したいゴールは？]
-  > 記事の構成を30分で練る！
-
-  ... ⏱️ 25:00 集中モード突入中 ...
-
-  [終わってみて、気づき・感想をどうぞ]
-  > 時間区切るだけで集中力が段違いだった。気持ちよく進んだ。
-
-  ✔ ナイスセッション！
-  📁 ログは今日の資産として保存されました。
-</div>
-
-<div class="section">
-  <div class="section-title">🧠 どう進めるかの時代へ</div>
-  <div class="section-body">
-    <p>「なにをやるか」より「どう進めるか」が大事だと思ったことはありませんか？</p>
-    <p>refloは、25分の集中作業（ポモドーロ）に</p>
-    <p>目標と振り返りを組み合わせることで、</p>
-    <p>ただの作業を「意味ある前進」に変えるCLIツールです。</p>
-  </div>
-</div>
-
-<div class="separator">────────────────────────────────────────</div>
-
-<div class="section">
-  <div class="section-title">🔁 あなたの行動に、リズムと意図を。</div>
-  <div class="section-body">
-    <p>Before: 今日もなんとなく始めて、なんとなく終わる</p>
-    <p>After : 目的を言葉にし、行動の記録が資産になる</p>
-    <p style="margin-top:48px">refloは、1セッションごとに小さな目標を宣言し、</p>
-    <p>終わったあとには気づきや改善点を記録します。</p>
-    <p>このサイクルが、あなたを進化させます。</p>
-  </div>
-</div>
-
-<div class="separator">────────────────────────────────────────</div>
-
-<div class="section">
-  <div class="section-title">🔍 自分の「クセ」を可視化するログ資産</div>
-  <div class="section-body">
-    <p>毎日の記録は、AIに学ばせる価値ある「自分データ」。</p>
-    <p>refloは、その第一歩を超軽量CLIでサポートします。</p>
-    <p>あなたの内省を、もっと速く、深く、自然に。</p>
-  </div>
-</div>
-
-<div class="separator">────────────────────────────────────────</div>
-
-<div class="section">
-  <div class="section-title">Try it now</div>
-  <ul>
-    <li>📦 <a href="https://github.com/saijo-shota-biz/reflo" target="_blank">GitHub</a></li>
-    <li>🍺 <code>brew tap saijo-shota-biz/homebrew-reflo</code></li>
-    <li>🍺 <code>brew install reflo</code></li>
-    <li>📘 <a href="https://github.com/saijo-shota-biz/reflo/blob/main/README.md" target="_blank">README</a></li>
-  </ul>
-</div>
-
-<div class="section">
-  <div class="section-title">from the creator</div>
-  <div class="section-body">
-    <div style="margin-top:32px">
-      <p>アジャイルに入門した頃から、短い時間での目標宣言と振り返りのフィードバックループの大切さを学びました。</p>
-      <p>でも、仕事に追われる日々の中で振り返りを忘れてしまい、１週間も経つと「先週、自分は何をしていたんだっけ？」と思うことがよくありました。</p>
-      <p>そこで、ポモドーロタイマーに「目標の宣言」と「振り返りの記録」を組み合わせて、</p>
-      <p>25分ごとに何に集中するのかを言葉にし、終わったあとにどう感じたかをログとして残すCLIアプリを作りました。</p>
+  <div class="terminal-window">
+    <div class="terminal-header">
+      <div class="terminal-dots">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="terminal-title">~/workspace → reflo session</div>
     </div>
-    <div style="margin-top:32px">
-      <p>ChatGPTがチャット履歴全体を参照できるようになったとき、</p>
-      <p>「これは、自分の行動ログを積み上げてAIに分析してもらえる時代が来る」と確信しました。</p>
-      <p>そして、このログは自己改善を加速させる大きな資産になると考えるようになりました。</p>
+    <div class="terminal-content">
+      <span class="prompt">$</span> reflo start <br />
+
+      <span class="system-msg">🍅 refloセッション開始</span> <br />
+
+      <br />
+
+      <span class="system-msg">✏️ このセッションで“完了したいゴール”は？</span> <br />
+      <span class="prompt">></span> <span class="user-input">記事の構成を30分で練る！</span> <br />
+
+      <br />
+
+      <span class="system-msg">⏳ 作業開始 25m0s …</span> <br />
+
+      <br />
+
+      <span class="system-msg">✏️ セッションを通しての気づき・感想をどうぞ</span> <br />
+      <span class="prompt">></span> <span class="user-input">時間区切るだけで集中力が段違いだった。気持ちよく進んだ。</span> <br />
+
+      <br />
+
+      <span class="success">✔ ナイスセッション！素晴らしい集中でした</span> <br />
+      <span class="file-path">📁 ログは今日の資産として保存 → ./reflo_logs/2025-05-31.json</span> <br />
     </div>
-    <div style="margin-top:32px">
-      <p>作業前に宣言し、作業後に振り返る。</p>
-      <p>それはつまり、大きなタスクを短時間で終えられる小さな単位に分解するということでもあります。</p>
-      <p>これは、若手エンジニアにとってタスク分割の練習にもなりますし、25分で自分が何をどこまでできるかを知ることで、見積もり精度も上がっていきます。</p>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">🧠 どう進めるかの時代へ</h2>
+    <div class="section-body">
+      <p>「なにをやるか」より「どう進めるか」が大事だと思ったことはありませんか？</p>
+      <p>refloは、25分の集中作業（ポモドーロ）に目標と振り返りを組み合わせることで、ただの作業を「意味ある前進」に変えるCLIツールです。</p>
+
+      <div class="comparison">
+        <div class="before">
+          今日もなんとなく始めて、なんとなく終わる。気がつけば時間ばかりが過ぎている...
+        </div>
+        <div class="after">
+          目的を言葉にし、行動の記録が資産になる。毎日の成長が見える化される
+        </div>
+      </div>
     </div>
-    <div style="margin-top:32px">
-      <p>僕自身も実際に使っていて、まだまだタスクの分解がうまくできていないなと感じることがあります。</p>
-      <p>宣言したことじゃないタスク、たとえばSlackの返信に気を取られてしまうこともよくあります。</p>
-      <p>でも、だからこそ、このrefloを作って、使いながら、少しずつ改善を続けていこうと思っています。</p>
+  </section>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <h3 style="color: #ff6b6b; margin-bottom: 1rem;">🔁 リズムと意図を生む</h3>
+      <p>refloは、1セッションごとに小さな目標を宣言し、終わったあとには気づきや改善点を記録します。このサイクルが、あなたを進化させます。</p>
+    </div>
+
+    <div class="feature-card">
+      <h3 style="color: #4ecdc4; margin-bottom: 1rem;">🔍 行動パターンの可視化</h3>
+      <p>毎日の記録は、AIに学ばせる価値ある「自分データ」。refloは、その第一歩を超軽量CLIでサポートします。あなたの内省を、もっと速く、深く、自然に。</p>
+    </div>
+
+    <div class="feature-card">
+      <h3 style="color: #4a9eff; margin-bottom: 1rem;">⚡ タスク分解の練習</h3>
+      <p>25分という短いスパンで目標を設定することで、大きなタスクを小さく分解する習慣が身につきます。見積もり精度の向上にも最適です。</p>
+    </div>
+
+    <div class="feature-card">
+      <h3 style="color: #a78bfa; margin-bottom: 1rem;">🛠️ 開発者フレンドリー</h3>
+      <p>余計な機能は一切なし。ターミナルから`reflo start`を実行するだけ。あなたの開発ワークフローに自然に溶け込みます。</p>
+    </div>
+  </div>
+
+  <div class="install-section">
+    <h2 class="install-title">🚀 Try it now</h2>
+    <div class="install-grid">
+      <div class="install-card">
+        <h4>📦 GitHub</h4>
+        <p><a href="https://github.com/saijo-shota-biz/reflo" target="_blank">リポジトリを見る</a></p>
+        <code>git clone https://github.com/saijo-shota-biz/reflo.git</code>
+      </div>
+
+      <div class="install-card">
+        <h4>🍺 Homebrew</h4>
+        <code>brew tap saijo-shota-biz/homebrew-reflo</code>
+        <code>brew install reflo</code>
+      </div>
+
+      <div class="install-card">
+        <h4>📘 Documentation</h4>
+        <p><a href="https://github.com/saijo-shota-biz/reflo/blob/main/README.md" target="_blank">README を読む</a></p>
+        <code>reflo help</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="creator-message">
+    <h2 class="creator-title">💌 from the creator</h2>
+
+    <div class="message-block">
+      <p>アジャイルに入門した頃から、短い時間での目標宣言と振り返りのフィードバックループの大切さを学びました。でも、仕事に追われる日々の中で振り返りを忘れてしまい、１週間も経つと「先週、自分は何をしていたんだっけ？」と思うことがよくありました。</p>
+    </div>
+
+    <div class="message-block">
+      <p>そこで、ポモドーロタイマーに「目標の宣言」と「振り返りの記録」を組み合わせて、25分ごとに何に集中するのかを言葉にし、終わったあとにどう感じたかをログとして残すCLIアプリを作りました。</p>
+    </div>
+
+    <div class="message-block">
+      <p>ChatGPTがチャット履歴全体を参照できるようになったとき、「これは、自分の行動ログを積み上げてAIに分析してもらえる時代が来る」と確信しました。そして、このログは自己改善を加速させる大きな資産になると考えるようになりました。</p>
+    </div>
+
+    <div class="message-block">
+      <p>作業前に宣言し、作業後に振り返る。それはつまり、大きなタスクを短時間で終えられる小さな単位に分解するということでもあります。これは、若手エンジニアにとってタスク分割の練習にもなりますし、25分で自分が何をどこまでできるかを知ることで、見積もり精度も上がっていきます。</p>
+    </div>
+
+    <div class="message-block">
+      <p>僕自身も実際に使っていて、まだまだタスクの分解がうまくできていないなと感じることがあります。宣言したことじゃないタスク、たとえばSlackの返信に気を取られてしまうこともよくあります。でも、だからこそ、このrefloを作って、使いながら、少しずつ改善を続けていこうと思っています。</p>
       <p>もしよかったら、あなたも一緒に始めてみませんか？</p>
     </div>
 
-    <p style="margin-top:32px">saijo shota</p>
+    <div class="signature">saijo shota</div>
   </div>
 </div>
 </body>
