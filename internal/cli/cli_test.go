@@ -6,6 +6,7 @@ import (
 	mock_logger "github.com/saijo-shota-biz/reflo/mock/logger"
 	mock_prompt "github.com/saijo-shota-biz/reflo/mock/prompt"
 	mock_runner "github.com/saijo-shota-biz/reflo/mock/runner"
+	mock_stopwatch "github.com/saijo-shota-biz/reflo/mock/stopwatch"
 	mock_timer "github.com/saijo-shota-biz/reflo/mock/timer"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -58,11 +59,13 @@ func TestCLI_New(t *testing.T) {
 		fakeLogger := mock_logger.NewMockLogger(ctrl)
 		fakeTimer := mock_timer.NewMockTimer(ctrl)
 		fakeReader := mock_prompt.NewMockReader(ctrl)
+		fakeStopwatch := mock_stopwatch.NewMockStopwatch(ctrl)
 		cli, err := New(
 			[]string{"reflo", "start"},
 			WithLogger(fakeLogger),
 			WithTimer(fakeTimer),
 			WithReader(fakeReader),
+			WithStopwatch(fakeStopwatch),
 		)
 
 		require.NoError(t, err)
@@ -71,6 +74,7 @@ func TestCLI_New(t *testing.T) {
 		require.Same(t, appImpl.Logger, fakeLogger)
 		require.Same(t, appImpl.Timer, fakeTimer)
 		require.Same(t, appImpl.Reader, fakeReader)
+		require.Same(t, appImpl.Stopwatch, fakeStopwatch)
 	})
 }
 

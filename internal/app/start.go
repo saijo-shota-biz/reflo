@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chzyer/readline"
-	"github.com/saijo-shota-biz/reflo/internal/humantime"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
 	"github.com/saijo-shota-biz/reflo/internal/prompt"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
@@ -24,7 +23,7 @@ func (app *App) Start() error {
 			return err
 		}
 
-		start := time.Now().UTC()
+		app.Stopwatch.Start()
 
 		err = doFocus(app.Timer, app.Cfg.FocusDuration)
 		if err != nil {
@@ -41,10 +40,9 @@ func (app *App) Start() error {
 			return err
 		}
 
-		end := time.Now().UTC()
+		app.Stopwatch.Stop()
 
-		printWorkTime(start, end)
-
+		start, end := app.Stopwatch.Time()
 		err = saveSession(app.Logger, start, end, goal, retro)
 		if err != nil {
 			return err
@@ -124,18 +122,6 @@ func doBreak(timer timer.Timer, duration time.Duration) error {
 	}
 	stopBreak()
 	return nil
-}
-
-func printWorkTime(start time.Time, end time.Time) {
-	span := humantime.Span(end.Sub(start))
-	fmt.Println("")
-	fmt.Printf(
-		"🕑 作業時間: %s (%s - %s)\n",
-		span,
-		start.In(time.Local).Format("15:04"),
-		end.In(time.Local).Format("15:04"),
-	)
-	fmt.Println("")
 }
 
 func saveSession(log logger.Logger, start time.Time, end time.Time, goal string, retro string) error {

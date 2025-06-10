@@ -5,6 +5,7 @@ import (
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
 	"github.com/saijo-shota-biz/reflo/internal/prompt"
+	"github.com/saijo-shota-biz/reflo/internal/stopwatch"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
 	"time"
@@ -43,10 +44,11 @@ func parseCmd(s string) (cmd, error) {
 
 type Option func(*deps)
 type deps struct {
-	runner Runner
-	logger logger.Logger
-	timer  timer.Timer
-	reader prompt.Reader
+	runner    Runner
+	logger    logger.Logger
+	timer     timer.Timer
+	reader    prompt.Reader
+	stopwatch stopwatch.Stopwatch
 }
 
 func defaultDeps(cfg app.Config) *deps {
@@ -56,10 +58,12 @@ func defaultDeps(cfg app.Config) *deps {
 		Break: cfg.BreakDuration,
 	})
 	r := prompt.NewTerminalReader(cfg.PromptIn, cfg.PromptOut)
+	sw := stopwatch.NewSimpleStopwatch()
 	return &deps{
-		logger: l,
-		timer:  t,
-		reader: r,
+		logger:    l,
+		timer:     t,
+		reader:    r,
+		stopwatch: sw,
 	}
 }
 
@@ -84,6 +88,12 @@ func WithTimer(t timer.Timer) Option {
 func WithReader(r prompt.Reader) Option {
 	return func(d *deps) {
 		d.reader = r
+	}
+}
+
+func WithStopwatch(sw stopwatch.Stopwatch) Option {
+	return func(d *deps) {
+		d.stopwatch = sw
 	}
 }
 
@@ -116,7 +126,7 @@ func New(args []string, opts ...Option) (*CLI, error) {
 	}
 
 	if d.runner == nil {
-		d.runner = app.New(cfg, d.logger, d.timer, d.reader)
+		d.runner = app.New(cfg, d.logger, d.timer, d.reader, d.stopwatch)
 	}
 
 	return &CLI{app: d.runner, command: command}, nil
