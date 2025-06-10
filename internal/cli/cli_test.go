@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	mock_logger "github.com/saijo-shota-biz/reflo/mock/logger"
+	mock_notification "github.com/saijo-shota-biz/reflo/mock/notification"
 	mock_prompt "github.com/saijo-shota-biz/reflo/mock/prompt"
 	mock_runner "github.com/saijo-shota-biz/reflo/mock/runner"
 	mock_stopwatch "github.com/saijo-shota-biz/reflo/mock/stopwatch"
@@ -60,12 +61,14 @@ func TestCLI_New(t *testing.T) {
 		fakeTimer := mock_timer.NewMockTimer(ctrl)
 		fakeReader := mock_prompt.NewMockReader(ctrl)
 		fakeStopwatch := mock_stopwatch.NewMockStopwatch(ctrl)
+		fakeNotifier := mock_notification.NewMockNotifier(ctrl)
 		cli, err := New(
 			[]string{"reflo", "start"},
 			WithLogger(fakeLogger),
 			WithTimer(fakeTimer),
 			WithReader(fakeReader),
 			WithStopwatch(fakeStopwatch),
+			WithNotifier(fakeNotifier),
 		)
 
 		require.NoError(t, err)
@@ -75,6 +78,7 @@ func TestCLI_New(t *testing.T) {
 		require.Same(t, appImpl.Timer, fakeTimer)
 		require.Same(t, appImpl.Reader, fakeReader)
 		require.Same(t, appImpl.Stopwatch, fakeStopwatch)
+		require.Same(t, appImpl.Notifier, fakeNotifier)
 	})
 }
 

@@ -23,6 +23,22 @@ and adheres to [Semantic Versioning](https://semver.org).
 
 ---
 
+## [1.3.0] – 2025-01-10
+
+### Added
+* **Desktop notifications** – Added desktop notifications when focus and break timers complete (using `github.com/gen2brain/beeep`)
+* **Notification abstraction** – Introduced `Notifier` interface for better testability and extensibility
+* **Stopwatch abstraction** – Added `Stopwatch` interface to track focus session durations with proper start/stop semantics
+* **Developer documentation** – Added `CLAUDE.md` with guidance on build, architecture, and development practices
+* **Project documentation** – Added HTML documentation landing page at `docs/index.html`
+
+### Changed
+* **Improved error handling** – Removed redundant error logging in notification implementation for cleaner error handling
+* **Refactored `App.Start`** – Improved modularity and testability by extracting helper functions
+* **Enhanced test coverage** – Added comprehensive tests for stopwatch functionality and updated app layer tests
+
+---
+
 ## [1.2.0] – 2025-05-28
 
 ### Added

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/chzyer/readline"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
+	"github.com/saijo-shota-biz/reflo/internal/notification"
 	"github.com/saijo-shota-biz/reflo/internal/prompt"
+	"github.com/saijo-shota-biz/reflo/internal/stopwatch"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
 	"os/signal"
@@ -25,12 +27,9 @@ func (app *App) Start() error {
 
 		app.Stopwatch.Start()
 
-		err = doFocus(app.Timer, app.Cfg.FocusDuration)
-		if err != nil {
+		if err = doFocus(app.Timer, app.Notifier, app.Cfg.FocusDuration); err != nil {
 			return err
 		}
-
-		fmt.Print("\a")
 
 		retro, canceled, err := readRetro(app.Reader)
 		if canceled {
@@ -42,18 +41,13 @@ func (app *App) Start() error {
 
 		app.Stopwatch.Stop()
 
-		start, end := app.Stopwatch.Time()
-		err = saveSession(app.Logger, start, end, goal, retro)
-		if err != nil {
+		if err = saveSession(app.Logger, app.Stopwatch, goal, retro); err != nil {
 			return err
 		}
 
-		err = doBreak(app.Timer, app.Cfg.BreakDuration)
-		if err != nil {
+		if err = doBreak(app.Timer, app.Notifier, app.Cfg.BreakDuration); err != nil {
 			return err
 		}
-
-		fmt.Print("\a")
 
 		printNextSession()
 	}
@@ -86,7 +80,7 @@ func readRetro(reader prompt.Reader) (string, bool, error) {
 	return retro, false, nil
 }
 
-func doFocus(timer timer.Timer, duration time.Duration) error {
+func doFocus(timer timer.Timer, notifier notification.Notifier, duration time.Duration) error {
 	fmt.Println("")
 	fmt.Printf("⏳ 作業開始 %v …\n", duration)
 	fmt.Println("")
@@ -95,18 +89,17 @@ func doFocus(timer timer.Timer, duration time.Duration) error {
 		switch {
 		case errors.Is(err, context.Canceled):
 			fmt.Println("⚠️ フォーカスタイマーをスキップしました。")
-			return nil
 		default:
 			fmt.Printf("💥 タイマー処理で予期せぬエラーが発生しました: %v\n", err)
 			return err
 		}
 	}
 	stopFocus() //Signal channelを開放
+	_ = notifier.NotifyFocusComplete()
 	return nil
 }
 
-func doBreak(timer timer.Timer, duration time.Duration) error {
-	fmt.Println("")
+func doBreak(timer timer.Timer, notifier notification.Notifier, duration time.Duration) error {
 	fmt.Printf("⏳ 休憩開始 %v …\n", duration)
 	fmt.Println("")
 	breakCtx, stopBreak := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -114,17 +107,18 @@ func doBreak(timer timer.Timer, duration time.Duration) error {
 		switch {
 		case errors.Is(err, context.Canceled):
 			fmt.Println("⚠️ 休憩をスキップしました。すぐ次のセッションを開始します。")
-			return nil
 		default:
 			fmt.Printf("💥 タイマー処理で予期せぬエラーが発生しました: %v\n", err)
 			return err
 		}
 	}
 	stopBreak()
+	_ = notifier.NotifyBreakComplete()
 	return nil
 }
 
-func saveSession(log logger.Logger, start time.Time, end time.Time, goal string, retro string) error {
+func saveSession(log logger.Logger, stopwatch stopwatch.Stopwatch, goal string, retro string) error {
+	start, end := stopwatch.Time()
 	err := log.Write(logger.Session{
 		StartTime: start,
 		EndTime:   end,
@@ -139,7 +133,6 @@ func saveSession(log logger.Logger, start time.Time, end time.Time, goal string,
 }
 
 func printNextSession() {
-	fmt.Println("")
 	fmt.Println("▶️ 次のセッションへ")
 	fmt.Println("")
 }

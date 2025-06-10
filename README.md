@@ -61,6 +61,30 @@ $ reflo end-day
 
 ---
 
+## 🔧 Troubleshooting
+
+### macOS: Notifications not appearing
+
+On first use, you need to enable notifications for reflo:
+
+1. Open Script Editor
+   ```bash
+   open -a "Script Editor"
+   ```
+
+2. Paste and run this script (click the ▶️ play button):
+   ```applescript
+   display notification "Test notification" with title "Reflo"
+   ```
+
+3. When prompted, click "Allow" to grant notification permissions
+
+4. Notifications from reflo should now work properly
+
+**Note**: This is a one-time setup required due to macOS security policies for CLI applications.
+
+---
+
 ## 🛤 Future Plans
 
 - TUI version using Bubble Tea

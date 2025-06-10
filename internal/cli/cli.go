@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/saijo-shota-biz/reflo/internal/app"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
+	"github.com/saijo-shota-biz/reflo/internal/notification"
 	"github.com/saijo-shota-biz/reflo/internal/prompt"
 	"github.com/saijo-shota-biz/reflo/internal/stopwatch"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
@@ -49,6 +50,7 @@ type deps struct {
 	timer     timer.Timer
 	reader    prompt.Reader
 	stopwatch stopwatch.Stopwatch
+	notifier  notification.Notifier
 }
 
 func defaultDeps(cfg app.Config) *deps {
@@ -59,11 +61,13 @@ func defaultDeps(cfg app.Config) *deps {
 	})
 	r := prompt.NewTerminalReader(cfg.PromptIn, cfg.PromptOut)
 	sw := stopwatch.NewSimpleStopwatch()
+	n := notification.NewBeeepNotifier()
 	return &deps{
 		logger:    l,
 		timer:     t,
 		reader:    r,
 		stopwatch: sw,
+		notifier:  n,
 	}
 }
 
@@ -97,6 +101,12 @@ func WithStopwatch(sw stopwatch.Stopwatch) Option {
 	}
 }
 
+func WithNotifier(n notification.Notifier) Option {
+	return func(d *deps) {
+		d.notifier = n
+	}
+}
+
 type CLI struct {
 	app     Runner
 	command cmd
@@ -126,7 +136,7 @@ func New(args []string, opts ...Option) (*CLI, error) {
 	}
 
 	if d.runner == nil {
-		d.runner = app.New(cfg, d.logger, d.timer, d.reader, d.stopwatch)
+		d.runner = app.New(cfg, d.logger, d.timer, d.reader, d.stopwatch, d.notifier)
 	}
 
 	return &CLI{app: d.runner, command: command}, nil
