@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"github.com/chzyer/readline"
 	"github.com/saijo-shota-biz/reflo/internal/logger"
@@ -46,38 +47,39 @@ func TestApp_Start(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "Goal読み取り時にCtrl+Cすると、タイマーが動かず、ログも書き込まれない",
+			name: "Goal読み取り時にCtrl+Cすると、後続の処理を行わず、正常終了する",
 			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
 				gomock.InOrder(
 					mr.EXPECT().ReadLine(goalPrompt).Return("", readline.ErrInterrupt),
+					mt.EXPECT().Focus(gomock.Any()).Times(0),
+					mr.EXPECT().ReadLine(retroPrompt).Times(0),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
 				)
-				mt.EXPECT().Focus(gomock.Any()).Times(0)
-				mr.EXPECT().ReadLine(retroPrompt).Times(0)
-				ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0)
-				mt.EXPECT().Break(gomock.Any()).Times(0)
+
 			},
 			expectErr: false,
 		},
 		{
-			name: "Retro読み取り時にCtrl+Cしても、空文字列扱いでログが書き込まれ、休憩も行う",
+			name: "Goal読み取り時にエラーが発生すると、後続の処理を行わず、エラーを返す",
 			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
 				gomock.InOrder(
-					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
-					mt.EXPECT().Focus(gomock.Any()).Return(nil),
-					mr.EXPECT().ReadLine(retroPrompt).Return("", readline.ErrInterrupt),
-					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(nil),
-					mt.EXPECT().Break(gomock.Any()).Return(nil),
-					mr.EXPECT().ReadLine(gomock.Any()).Return("", readline.ErrInterrupt),
+					mr.EXPECT().ReadLine(goalPrompt).Return("", errors.New("boom")),
+					mt.EXPECT().Focus(gomock.Any()).Times(0),
+					mr.EXPECT().ReadLine(retroPrompt).Times(0),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
 				)
+
 			},
-			expectErr: false,
+			expectErr: true,
 		},
 		{
 			name: "Focusタイマーでのキャンセルが発生したときに、Retroへ進む",
 			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
 				gomock.InOrder(
 					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
-					mt.EXPECT().Focus(gomock.Any()).Return(errors.New("boom")),
+					mt.EXPECT().Focus(gomock.Any()).Return(context.Canceled),
 					mr.EXPECT().ReadLine(retroPrompt).Return("Good job", nil),
 					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(nil),
 					mt.EXPECT().Break(gomock.Any()).Return(nil),
@@ -85,6 +87,48 @@ func TestApp_Start(t *testing.T) {
 				)
 			},
 			expectErr: false,
+		},
+		{
+			name: "Focusタイマーでのエラーが発生したときに、後続の処理を行わず、エラーを返す",
+			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
+				gomock.InOrder(
+					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
+					mt.EXPECT().Focus(gomock.Any()).Return(errors.New("boom")),
+					mr.EXPECT().ReadLine(retroPrompt).Times(0),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
+					mr.EXPECT().ReadLine(gomock.Any()).Times(0),
+				)
+			},
+			expectErr: true,
+		},
+		{
+			name: "Retro読み取り時にCtrl+Cしたら、後続の処理を行わず、正常終了する",
+			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
+				gomock.InOrder(
+					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
+					mt.EXPECT().Focus(gomock.Any()).Return(nil),
+					mr.EXPECT().ReadLine(retroPrompt).Return("", readline.ErrInterrupt),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
+					mr.EXPECT().ReadLine(gomock.Any()).Times(0),
+				)
+			},
+			expectErr: false,
+		},
+		{
+			name: "Retro読み取り時にエラーが発生したら、後続の処理を行わず、エラーを返す",
+			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
+				gomock.InOrder(
+					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
+					mt.EXPECT().Focus(gomock.Any()).Return(nil),
+					mr.EXPECT().ReadLine(retroPrompt).Return("", errors.New("boom")),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Times(0),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
+					mr.EXPECT().ReadLine(gomock.Any()).Times(0),
+				)
+			},
+			expectErr: true,
 		},
 		{
 			name: "ログ書き込み時にエラーになった時、処理が終了すること",
@@ -94,9 +138,38 @@ func TestApp_Start(t *testing.T) {
 					mt.EXPECT().Focus(gomock.Any()).Return(nil),
 					mr.EXPECT().ReadLine(retroPrompt).Return("Good job", nil),
 					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(errors.New("boom")),
+					mt.EXPECT().Break(gomock.Any()).Times(0),
 				)
-				mt.EXPECT().Break(gomock.Any()).Times(0)
 			},
+			expectErr: true,
+		},
+		{
+			name: "Breakタイマーでのキャンセルが発生したときに、次のセッションに進む",
+			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
+				gomock.InOrder(
+					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
+					mt.EXPECT().Focus(gomock.Any()).Return(nil),
+					mr.EXPECT().ReadLine(retroPrompt).Return("Good job", nil),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(nil),
+					mt.EXPECT().Break(gomock.Any()).Return(context.Canceled),
+					mr.EXPECT().ReadLine(gomock.Any()).Return("", readline.ErrInterrupt),
+				)
+			},
+			expectErr: false,
+		},
+		{
+			name: "Breakタイマーでのエラーが発生したときに、後続の処理を行わず、エラーを返す",
+			setup: func(ml *mock_logger.MockLogger, mt *mock_timer.MockTimer, mr *mock_prompt.MockReader) {
+				gomock.InOrder(
+					mr.EXPECT().ReadLine(goalPrompt).Return("Write docs", nil),
+					mt.EXPECT().Focus(gomock.Any()).Return(nil),
+					mr.EXPECT().ReadLine(retroPrompt).Return("Good job", nil),
+					ml.EXPECT().Write(gomock.AssignableToTypeOf(logger.Session{})).Return(nil),
+					mt.EXPECT().Break(gomock.Any()).Return(errors.New("boom")),
+					mr.EXPECT().ReadLine(gomock.Any()).Times(0),
+				)
+			},
+			expectErr: true,
 		},
 	}
 
