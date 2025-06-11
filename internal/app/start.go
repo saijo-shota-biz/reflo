@@ -8,7 +8,6 @@ import (
 	"github.com/saijo-shota-biz/reflo/internal/logger"
 	"github.com/saijo-shota-biz/reflo/internal/notification"
 	"github.com/saijo-shota-biz/reflo/internal/prompt"
-	"github.com/saijo-shota-biz/reflo/internal/stopwatch"
 	"github.com/saijo-shota-biz/reflo/internal/timer"
 	"os"
 	"os/signal"
@@ -17,31 +16,15 @@ import (
 
 func (app *App) Start() error {
 	for {
-		goal, canceled, err := readGoal(app.Reader)
-		if canceled {
-			return nil
-		}
+		session, err := app.doFocusSession()
 		if err != nil {
 			return err
 		}
-
-		app.Stopwatch.Start()
-
-		if err = doFocus(app.Timer, app.Notifier, app.Cfg.FocusDuration); err != nil {
-			return err
+		if session.EndTime.IsZero() {
+			break
 		}
 
-		retro, canceled, err := readRetro(app.Reader)
-		if canceled {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		app.Stopwatch.Stop()
-
-		if err = saveSession(app.Logger, app.Stopwatch, goal, retro); err != nil {
+		if err = saveSession(app.Logger, session); err != nil {
 			return err
 		}
 
@@ -49,8 +32,51 @@ func (app *App) Start() error {
 			return err
 		}
 
-		printNextSession()
+		canceled, err := readNextSession(app.Reader)
+		if err != nil {
+			return err
+		}
+		if canceled {
+			break
+		}
 	}
+
+	fmt.Println("お疲れ様でした！")
+	return nil
+}
+
+func (app *App) doFocusSession() (logger.Session, error) {
+	session := logger.Session{}
+
+	session.StartTime = app.Stopwatch.Start()
+
+	goal, canceled, err := readGoal(app.Reader)
+	if err != nil {
+		return session, err
+	}
+	if canceled {
+		return session, nil
+	}
+	session.Goal = goal
+
+	if err = doFocus(app.Timer, app.Notifier, app.Cfg.FocusDuration); err != nil {
+		return session, err
+	}
+
+	retro, canceled, err := readRetro(app.Reader)
+	if err != nil {
+		return session, err
+	}
+	if canceled {
+		return session, nil
+	}
+	session.Retro = retro
+
+	session.EndTime = app.Stopwatch.Stop()
+
+	fmt.Println(app.Stopwatch)
+
+	return session, nil
 }
 
 func readGoal(reader prompt.Reader) (string, bool, error) {
@@ -61,7 +87,7 @@ func readGoal(reader prompt.Reader) (string, bool, error) {
 		fmt.Println("次のセッションを始めるには `reflo start` を再実行してください。")
 		return "", true, nil
 	case err != nil:
-		fmt.Printf("💥 目標の読み取りに失敗しました: %v\n", err)
+		fmt.Printf("💥 ゴールの読み取りに失敗しました: %v\n", err)
 		return "", false, err
 	}
 	return goal, false, nil
@@ -117,14 +143,8 @@ func doBreak(timer timer.Timer, notifier notification.Notifier, duration time.Du
 	return nil
 }
 
-func saveSession(log logger.Logger, stopwatch stopwatch.Stopwatch, goal string, retro string) error {
-	start, end := stopwatch.Time()
-	err := log.Write(logger.Session{
-		StartTime: start,
-		EndTime:   end,
-		Goal:      goal,
-		Retro:     retro,
-	})
+func saveSession(log logger.Logger, session logger.Session) error {
+	err := log.Write(session)
 	if err != nil {
 		fmt.Printf("💥 ログ保存に失敗しました: %v\n", err)
 		return err
@@ -132,7 +152,16 @@ func saveSession(log logger.Logger, stopwatch stopwatch.Stopwatch, goal string, 
 	return nil
 }
 
-func printNextSession() {
-	fmt.Println("▶️ 次のセッションへ")
-	fmt.Println("")
+func readNextSession(r prompt.Reader) (bool, error) {
+	if err := r.ReadCommand("👉 次のセッションに進みますか？"); err != nil {
+		switch {
+		case errors.Is(err, readline.ErrInterrupt):
+			return true, nil
+		default:
+			fmt.Printf("💥 予期せぬエラーが発生しました: %v\n", err)
+			return false, err
+		}
+	}
+
+	return false, nil
 }

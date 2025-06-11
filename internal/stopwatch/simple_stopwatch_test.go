@@ -14,9 +14,12 @@ func TestSimpleStopwatch(t *testing.T) {
 		const sleeptime = 100 * time.Millisecond
 		sw := NewSimpleStopwatch()
 
+		// Act & Assert
+		elapsed := sw.Elapsed()
+		require.Equal(t, time.Duration(0), elapsed)
+
 		// Act
-		sw.Start()
-		start, _ := sw.Time()
+		start := sw.Start()
 
 		// Assert
 		require.WithinDuration(t, time.Now().UTC(), start, delta)
@@ -24,12 +27,11 @@ func TestSimpleStopwatch(t *testing.T) {
 		time.Sleep(sleeptime)
 
 		// Act & Assert
-		elapsed := sw.Elapsed()
-		require.Equal(t, time.Duration(0), elapsed)
+		elapsed = sw.Elapsed()
+		require.InDelta(t, float64(elapsed), float64(time.Since(start)), float64(delta))
 
 		// Act
-		sw.Stop()
-		_, end := sw.Time()
+		end := sw.Stop()
 
 		// Assert
 		require.WithinDuration(t, time.Now().UTC(), end, delta)

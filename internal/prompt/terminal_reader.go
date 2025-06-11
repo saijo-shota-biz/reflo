@@ -20,18 +20,22 @@ func NewTerminalReader(in io.ReadCloser, out io.Writer) *TerminalReader {
 func (tr *TerminalReader) ReadLine(prompt string) (string, error) {
 	done := false
 
-	fmt.Printf("%v\n(Enterで改行 / Ctrl+Dで送信 / Ctrl+Cで終了) > \n", prompt)
+	if _, err := fmt.Fprintf(tr.Out, "%v\n(Enterで改行 / Ctrl+Dで送信 / Ctrl+Cで終了) > \n", prompt); err != nil {
+		return "", err
+	}
 
 	cfg := &readline.Config{
 		Prompt:              "",
 		UniqueEditLine:      false,
 		ForceUseInteractive: true,
 		FuncFilterInputRune: func(r rune) (rune, bool) {
-			if r == readline.CharDelete { // Ctrl-D で送信したい
+			// Ctrl + Dで送信する。
+			// この処理がないと > hogehoge^Dで送信できない。
+			if r == readline.CharDelete {
 				done = true
-				return '\n', true // ← 改行を“入力した”ことにする
+				return '\n', true
 			}
-			return r, true // 通常処理
+			return r, true
 		},
 		Stdin:  tr.In,
 		Stdout: tr.Out,
@@ -48,18 +52,49 @@ func (tr *TerminalReader) ReadLine(prompt string) (string, error) {
 		switch {
 		case err == nil:
 			sb.WriteString(line)
-
 			if done {
 				return sb.String(), nil
 			}
-
 			sb.WriteString("\n")
 		case errors.Is(err, readline.ErrInterrupt):
-			return "", err // 上位で Ctrl-C 判定
+			return "", err
 		case err == io.EOF:
 			return sb.String(), nil
 		default:
-			return "", err // 予期せぬエラー
+			return "", err
 		}
 	}
+}
+
+func (tr *TerminalReader) ReadCommand(prompt string) error {
+	if _, err := fmt.Fprintf(tr.Out, "%v\n(Enterで続行 / Ctrl+Cで終了) > \n", prompt); err != nil {
+		return err
+	}
+
+	cfg := &readline.Config{
+		Prompt:              "",
+		UniqueEditLine:      false,
+		ForceUseInteractive: true,
+		Stdin:               tr.In,
+		Stdout:              tr.Out,
+	}
+
+	rl, err := readline.NewEx(cfg)
+	if err != nil {
+		return fmt.Errorf("readline init: %w", err)
+	}
+	defer rl.Close()
+
+	_, err = rl.Readline()
+	if err != nil {
+		if errors.Is(err, readline.ErrInterrupt) {
+			return err
+		}
+		if err == io.EOF {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }

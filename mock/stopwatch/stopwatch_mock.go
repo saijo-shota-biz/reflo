@@ -55,9 +55,11 @@ func (mr *MockStopwatchMockRecorder) Elapsed() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockStopwatch) Start() {
+func (m *MockStopwatch) Start() time.Time {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start")
+	ret := m.ctrl.Call(m, "Start")
+	ret0, _ := ret[0].(time.Time)
+	return ret0
 }
 
 // Start indicates an expected call of Start.
@@ -67,28 +69,15 @@ func (mr *MockStopwatchMockRecorder) Start() *gomock.Call {
 }
 
 // Stop mocks base method.
-func (m *MockStopwatch) Stop() {
+func (m *MockStopwatch) Stop() time.Time {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Stop")
+	ret := m.ctrl.Call(m, "Stop")
+	ret0, _ := ret[0].(time.Time)
+	return ret0
 }
 
 // Stop indicates an expected call of Stop.
 func (mr *MockStopwatchMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockStopwatch)(nil).Stop))
-}
-
-// Time mocks base method.
-func (m *MockStopwatch) Time() (time.Time, time.Time) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Time")
-	ret0, _ := ret[0].(time.Time)
-	ret1, _ := ret[1].(time.Time)
-	return ret0, ret1
-}
-
-// Time indicates an expected call of Time.
-func (mr *MockStopwatchMockRecorder) Time() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Time", reflect.TypeOf((*MockStopwatch)(nil).Time))
 }

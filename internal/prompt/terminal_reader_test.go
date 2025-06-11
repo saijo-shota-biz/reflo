@@ -50,3 +50,52 @@ func TestTerminalReader_ReadLine(t *testing.T) {
 		require.Equal(t, "", got)
 	})
 }
+
+func TestTerminalReader_ReadCommand(t *testing.T) {
+	t.Run("Enterを押した時、nilが返る", func(t *testing.T) {
+		r, w := io.Pipe()
+		var out strings.Builder
+
+		tr := &TerminalReader{In: r, Out: &out}
+
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			w.Write([]byte("\n"))
+			w.Close()
+		}()
+
+		err := tr.ReadCommand("次のセッションに進みますか？")
+		require.NoError(t, err)
+	})
+
+	t.Run("Ctrl+Cを押した時、ErrInterruptが返る", func(t *testing.T) {
+		r, w := io.Pipe()
+		var out strings.Builder
+
+		tr := &TerminalReader{In: r, Out: &out}
+
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			w.Write([]byte{readline.CharInterrupt})
+			w.Close()
+		}()
+
+		err := tr.ReadCommand("次のセッションに進みますか？")
+		require.ErrorIs(t, err, readline.ErrInterrupt)
+	})
+
+	t.Run("EOFの時、nilが返る", func(t *testing.T) {
+		r, w := io.Pipe()
+		var out strings.Builder
+
+		tr := &TerminalReader{In: r, Out: &out}
+
+		go func() {
+			time.Sleep(10 * time.Millisecond)
+			w.Close() // EOF
+		}()
+
+		err := tr.ReadCommand("次のセッションに進みますか？")
+		require.NoError(t, err)
+	})
+}

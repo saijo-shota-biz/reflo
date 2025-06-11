@@ -39,6 +39,20 @@ func (m *MockReader) EXPECT() *MockReaderMockRecorder {
 	return m.recorder
 }
 
+// ReadCommand mocks base method.
+func (m *MockReader) ReadCommand(prompt string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadCommand", prompt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReadCommand indicates an expected call of ReadCommand.
+func (mr *MockReaderMockRecorder) ReadCommand(prompt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadCommand", reflect.TypeOf((*MockReader)(nil).ReadCommand), prompt)
+}
+
 // ReadLine mocks base method.
 func (m *MockReader) ReadLine(prompt string) (string, error) {
 	m.ctrl.T.Helper()
